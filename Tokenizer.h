@@ -5,8 +5,12 @@
 #include <vector>
 #include <ostream>
 
+#include "Optional.h"
+
 enum class TokenType : unsigned char {
+  Comma,
   Number,
+  Float,
   Identifier,
   Operator,
   LeftParen,
@@ -16,8 +20,12 @@ enum class TokenType : unsigned char {
 
 inline std::ostream& operator<<(std::ostream& os, TokenType type) {
   switch (type) {
+    case TokenType::Comma:
+      return os << "Comma";
     case TokenType::Number:
       return os << "Number";
+    case TokenType::Float:
+      return os << "Float";
     case TokenType::Identifier:
       return os << "Identifier";
     case TokenType::Operator:
@@ -53,14 +61,22 @@ class Token {
   union {
     char* m_ident;
     unsigned m_number;
+    double m_float;
     char m_op;
   } m_value;
 
   explicit Token(TokenType type, Span span) : m_type(type), m_span(span) {};
 
  public:
-  Token(const Token&) = delete;
-  Token() = delete;
+  Token& operator=(const Token& other) {
+    m_type = other.m_type;
+    m_span = other.m_span;
+    m_value = other.m_value;
+    if (type() == TokenType::Identifier)
+      m_value.m_ident = strdup(other.m_value.m_ident);
+    return *this;
+  }
+
   Token(Token&& other) {
     m_type = other.m_type;
     m_value = other.m_value;
@@ -85,8 +101,15 @@ class Token {
     return tok;
   }
 
+  static Token createFloat(double num, Span location) {
+    Token tok(TokenType::Float, location);
+    tok.m_value.m_float = num;
+    return tok;
+  }
+
   static Token createOfType(TokenType type, Span span) {
     assert(type != TokenType::Number &&
+           type != TokenType::Float &&
            type != TokenType::Operator &&
            type != TokenType::Identifier);
     return Token(type, span);
@@ -114,6 +137,11 @@ class Token {
     return m_value.m_number;
   }
 
+  double doubleValue() const {
+    assert(type() == TokenType::Float);
+    return m_value.m_float;
+  }
+
   char op() const {
     assert(type() == TokenType::Operator);
     return m_value.m_op;
@@ -130,6 +158,9 @@ inline std::ostream& operator<<(std::ostream& os, const Token& token) {
   switch (token.type()) {
     case TokenType::Number:
       os << ", " << token.number();
+      break;
+    case TokenType::Float:
+      os << ", " << token.doubleValue();
       break;
     case TokenType::Operator:
       os << ", " << token.op();
@@ -154,12 +185,23 @@ class Reader {
 };
 
 class Tokenizer {
-  Reader& m_reader;
-  Span m_location;
-  std::vector<char> m_savedChars;
+ public:
+  Span location() const { return m_location; }
+  const char* errorMessage() const { return m_error; }
+  Tokenizer(Reader& reader) : m_reader(reader) {};
+  Optional<Token> nextToken();
+
+ private:
+  Optional<Token> nextTokenInternal();
+  Optional<Token> error(const char* message) {
+    m_error = message;
+    return None;
+  }
   char peekChar();
   char nextChar();
- public:
-  Tokenizer(Reader& reader) : m_reader(reader) {};
-  Token nextToken();
+
+  Reader& m_reader;
+  Span m_location;
+  const char* m_error { nullptr };
+  Optional<char> m_lastChar;
 };

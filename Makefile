@@ -1,7 +1,7 @@
-TARGETS := target/TokenizerTest # parser evaluator
+TARGETS := target/TokenizerTest target/EvaluatorTest # parser evaluator
 SOURCES := $(wildcard *.cc)
 TARGET_OBJS := $(patsubst %.cc, target/%.o, $(SOURCES))
-CFLAGS := -Wall -Werror -pedantic
+CFLAGS := -Wall -Werror -pedantic -std=c++14 -g
 
 .PHONY: all
 all: $(TARGETS)
@@ -14,7 +14,7 @@ format: $(SOURCES)
 target:
 	mkdir -p $@
 
-target/%: target/%.o $(TARGET_OBJS)
+target/%: target/%.o $(filter-out $(patsubst %, %.o, $(TARGETS)), $(TARGET_OBJS))
 	$(CXX) $(CFLAGS) -o $@ $^
 
 target/%.o: %.cc %.h target

@@ -33,14 +33,14 @@ static bool isTokenSeparator(char which) {
 }
 
 char Tokenizer::peekChar() {
-  if (m_savedChars.empty())
-    m_savedChars.push_back(m_reader.next());
-  return m_savedChars[0];
+  if (!m_lastChar)
+    m_lastChar.set(m_reader.next());
+  return *m_lastChar;
 }
 
 char Tokenizer::nextChar() {
   char which = peekChar();
-  m_savedChars.erase(m_savedChars.begin());
+  m_lastChar.clear();
   if (which)
     m_location.column += 1;
   if (which == '\n') {
@@ -50,24 +50,33 @@ char Tokenizer::nextChar() {
   return which;
 }
 
-Token Tokenizer::nextToken() {
+Optional<Token> Tokenizer::nextToken() {
+  if (m_error)
+    return None;
+  return nextTokenInternal();
+}
+
+Optional<Token> Tokenizer::nextTokenInternal() {
 again:
   Span location = m_location;
   char next = nextChar();
   if (!next)
-    return Token::createOfType(TokenType::Eof, location);
+    return Some(Token::createOfType(TokenType::Eof, location));
 
   if (isWhitespace(next))
     goto again;
 
   if (isOperator(next))
-    return Token::createOp(next, location);
+    return Some(Token::createOp(next, location));
 
   if (next == ')')
-    return Token::createOfType(TokenType::RightParen, location);
+    return Some(Token::createOfType(TokenType::RightParen, location));
 
   if (next == '(')
-    return Token::createOfType(TokenType::LeftParen, location);
+    return Some(Token::createOfType(TokenType::LeftParen, location));
+
+  if (next == ',')
+    return Some(Token::createOfType(TokenType::Comma, location));
 
   if (isNumeric(next)) {
     std::string number;
@@ -76,12 +85,19 @@ again:
     // meh.
     while (isNumeric(peekChar()))
       number.push_back(nextChar());
-    if (!isTokenSeparator(peekChar())) {
-      // TODO(emilio): Return an error, here and below.
-      fprintf(stderr, "Invalid token after number %c\n", peekChar());
-      abort();
+    if (peekChar() == '.') {
+      number.push_back(nextChar());
+      while (isNumeric(peekChar()))
+        number.push_back(nextChar());
+      if (!isTokenSeparator(peekChar()))
+        return error("Invalid token separator after floating point number");
+      if (number[number.size() - 1] == '.')
+        number.push_back('0');
+      return Some(Token::createFloat(std::strtod(number.c_str(), nullptr), location));
     }
-    return Token::createNumber(std::stoull(number), location);
+    if (!isTokenSeparator(peekChar()))
+      return error("Invalid token separator after number");
+    return Some(Token::createNumber(std::stoull(number), location));
   }
 
   if (isIdentifierStart(next)) {
@@ -91,16 +107,11 @@ again:
     while (isIdentPart(peekChar()))
       ident.push_back(nextChar());
 
-    if (!isTokenSeparator(peekChar())) {
-      fprintf(stderr, "Invalid token after ident %c\n", peekChar());
-      abort();
-    }
+    if (!isTokenSeparator(peekChar()))
+      return error("Invalid token separator after identifier");
 
-    return Token::createIdent(ident.c_str(), location);
+    return Some(Token::createIdent(ident.c_str(), location));
   }
 
-  fprintf(stderr, "Unknown token: %c\n", next);
-  abort();
-
-  return Token::createOfType(TokenType::Eof, location);
+  return error("unknown token");
 }
