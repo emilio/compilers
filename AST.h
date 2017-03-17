@@ -62,6 +62,11 @@ class BinaryOperation final : public Expression {
   std::unique_ptr<Expression> m_rhs;
 
  public:
+  BinaryOperation(char op,
+                  std::unique_ptr<Expression>&& lhs,
+                  std::unique_ptr<Expression>&& rhs)
+    : m_op(op), m_lhs(std::move(lhs)), m_rhs(std::move(rhs)) {}
+
   bool isOfType(NodeType type) const override {
     return type == NodeType::BinaryOperation || Expression::isOfType(type);
   }

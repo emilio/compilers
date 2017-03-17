@@ -31,7 +31,7 @@ Parser::nextToken() {
 }
 
 std::unique_ptr<ast::Expression>
-Parser::parseExpression() {
+Parser::parseOneExpression() {
   Optional<Token> tok = nextToken();
 
   switch (tok->type()) {
@@ -43,24 +43,7 @@ Parser::parseExpression() {
         ? Value::createInt(tok->number())
         : Value::createDouble(tok->doubleValue());
 
-      auto maybe_lhs = std::make_unique<ast::ConstantExpression>(val);
-      if (!maybe_lhs)
-        return nullptr;
-
-      Optional<Token> tok = nextToken();
-      if (!tok)
-        return noteParseError(m_tokenizer.errorMessage());
-      if (tok->type() != TokenType::Operator) {
-        m_lastToken = std::move(tok);
-        return maybe_lhs;
-      }
-
-      // TODO(emilio): This recursiveness is quite nice, but it doesn't take
-      // operator precedence into account, does it?
-      auto rhs = parseExpression();
-      if (!rhs)
-        return nullptr;
-
+      return std::make_unique<ast::ConstantExpression>(val);
     }
     case TokenType::LeftParen: {
       std::unique_ptr<ast::Expression> inner = parseExpression();
@@ -126,4 +109,26 @@ Parser::parseExpression() {
   assert(false);
   noteParseError("Internal error");
   return nullptr;
+}
+
+std::unique_ptr<ast::Expression>
+Parser::parseExpression() {
+  auto expr = parseOneExpression();
+  if (!expr)
+    return nullptr;
+  auto tok = nextToken();
+  if (!tok)
+    return noteParseError(m_tokenizer.errorMessage());
+  if (tok->type() != TokenType::Operator) {
+    m_lastToken = std::move(tok);
+    return expr;
+  }
+  char op = tok->op();
+  // TODO(emilio): This is nice, but doesn't handle operator precedence.
+  //
+  // Can we make it handle it easily with this strategy?
+  auto rhs = parseExpression();
+  if (!rhs)
+    return nullptr;
+  return std::make_unique<ast::BinaryOperation>(op, std::move(expr), std::move(rhs));
 }

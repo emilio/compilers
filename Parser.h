@@ -29,6 +29,7 @@ class Parser {
  private:
   Optional<Token> nextToken();
 
+  std::unique_ptr<ast::Expression> parseOneExpression();
   std::unique_ptr<ast::Expression> parseExpression();
 
   // The return value here is just convenience, it always returns null.
