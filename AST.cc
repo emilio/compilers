@@ -22,6 +22,9 @@ Value BinaryOperation::evaluate() const {
 
   IMPL_BIN_OP('+', +)  // Nasty
   IMPL_BIN_OP('-', -)
+  IMPL_BIN_OP('*', *)
+  IMPL_BIN_OP('/', /)
+
 
 #undef IMPL_BIN_OP
 
