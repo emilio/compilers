@@ -2,8 +2,7 @@
 
 #include <memory>
 
-ast::Node*
-Parser::parse() {
+ast::Node* Parser::parse() {
   m_astRoot = parseExpression();
 
   auto tok = m_tokenizer.nextToken();
@@ -15,23 +14,21 @@ Parser::parse() {
   return m_astRoot.get();
 }
 
-std::unique_ptr<ast::Expression>
-Parser::noteParseError(std::string&& message) {
+std::unique_ptr<ast::Expression> Parser::noteParseError(std::string&& message) {
   assert(!m_parseError);
   assert(!m_astRoot);
-  m_parseError.reset(new ParseError(m_tokenizer.location(), std::move(message)));
+  m_parseError.reset(
+      new ParseError(m_tokenizer.location(), std::move(message)));
   return nullptr;
 }
 
-Optional<Token>
-Parser::nextToken() {
+Optional<Token> Parser::nextToken() {
   if (m_lastToken)
     return std::move(m_lastToken);
   return m_tokenizer.nextToken();
 }
 
-std::unique_ptr<ast::Expression>
-Parser::parseOneExpression() {
+std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
   Optional<Token> tok = nextToken();
 
   switch (tok->type()) {
@@ -40,8 +37,8 @@ Parser::parseOneExpression() {
       // Maybe it's a standalone token, maybe it's the lhs of an arbitrarily
       // long binary expression tree.
       Value val = tok->type() == TokenType::Number
-        ? Value::createInt(tok->number())
-        : Value::createDouble(tok->doubleValue());
+                      ? Value::createInt(tok->number())
+                      : Value::createDouble(tok->doubleValue());
 
       return std::make_unique<ast::ConstantExpression>(val);
     }
@@ -111,8 +108,7 @@ Parser::parseOneExpression() {
   return nullptr;
 }
 
-std::unique_ptr<ast::Expression>
-Parser::parseExpression() {
+std::unique_ptr<ast::Expression> Parser::parseExpression() {
   auto expr = parseOneExpression();
   if (!expr)
     return nullptr;
@@ -130,5 +126,6 @@ Parser::parseExpression() {
   auto rhs = parseExpression();
   if (!rhs)
     return nullptr;
-  return std::make_unique<ast::BinaryOperation>(op, std::move(expr), std::move(rhs));
+  return std::make_unique<ast::BinaryOperation>(op, std::move(expr),
+                                                std::move(rhs));
 }

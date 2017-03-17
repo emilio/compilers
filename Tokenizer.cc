@@ -93,7 +93,8 @@ again:
         return error("Invalid token separator after floating point number");
       if (number[number.size() - 1] == '.')
         number.push_back('0');
-      return Some(Token::createFloat(std::strtod(number.c_str(), nullptr), location));
+      return Some(
+          Token::createFloat(std::strtod(number.c_str(), nullptr), location));
     }
     if (!isTokenSeparator(peekChar()))
       return error("Invalid token separator after number");

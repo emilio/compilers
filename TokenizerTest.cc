@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <iostream>
-#include "Tokenizer.h"
 #include "FileReader.h"
+#include "Tokenizer.h"
 
 // TODO(emilio): This should probably become a proper unit test with gtest or
 // something like that.
@@ -13,7 +13,8 @@ int main(int, const char**) {
   while (true) {
     Optional<Token> token = tokenizer.nextToken();
     if (!token) {
-      std::cout << "Tokenizer error: " << tokenizer.errorMessage() << " @ " << tokenizer.location() << std::endl;
+      std::cout << "Tokenizer error: " << tokenizer.errorMessage() << " @ "
+                << tokenizer.location() << std::endl;
       break;
     }
     std::cout << *token << std::endl;

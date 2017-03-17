@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Tokenizer.h"
 #include "AST.h"
+#include "Tokenizer.h"
 
 #include <memory>
 
 class ParseError {
  public:
-   ParseError(Span location, std::string&& message)
-     : m_location(location)
-     , m_message(message) {}
+  ParseError(Span location, std::string&& message)
+      : m_location(location), m_message(message) {}
 
   Span location() const { return m_location; }
   const std::string& message() const { return m_message; }

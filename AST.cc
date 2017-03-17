@@ -10,8 +10,8 @@ Value BinaryOperation::evaluate() const {
 #define IMPL_BIN_OP(ch, op)                                                    \
   if (m_op == ch) {                                                            \
     if (left.type() != right.type())                                           \
-      return Value::createDouble(left.normalizedValue() op                     \
-                                 right.normalizedValue());                     \
+      return Value::createDouble(left.normalizedValue()                        \
+                                     op right.normalizedValue());              \
     switch (left.type()) {                                                     \
       case ValueType::Integer:                                                 \
         return Value::createInt(left.intValue() op right.intValue());          \
@@ -20,12 +20,12 @@ Value BinaryOperation::evaluate() const {
     }                                                                          \
   }
 
-  IMPL_BIN_OP('+', +) // Nasty
+  IMPL_BIN_OP('+', +)  // Nasty
   IMPL_BIN_OP('-', -)
 
 #undef IMPL_BIN_OP
 
-  assert(false); // Again, easily reachable, need to implement other operators.
+  assert(false);  // Again, easily reachable, need to implement other operators.
   return Value::createInt(0);
 }
 
@@ -54,7 +54,7 @@ Value FunctionCall::evaluate() const {
     return Value::createDouble(cos(val));
   }
 
-  assert(false); // TODO(emilio): This is actually pretty reachable.
+  assert(false);  // TODO(emilio): This is actually pretty reachable.
   return Value::createDouble(0.0);
 }
 

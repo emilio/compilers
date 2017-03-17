@@ -1,8 +1,8 @@
 #include <cstdio>
 #include <iostream>
 #include "FileReader.h"
-#include "Tokenizer.h"
 #include "Parser.h"
+#include "Tokenizer.h"
 
 // TODO(emilio): This should probably become a proper unit test with gtest or
 // something like that.

@@ -31,6 +31,7 @@ class Expression : public Node {
 
 class ConstantExpression final : public Expression {
   Value m_value;
+
  public:
   ConstantExpression(Value value) : m_value(value) {}
 
@@ -47,7 +48,7 @@ class UnaryOperation final : public Expression {
 
  public:
   UnaryOperation(char op, std::unique_ptr<Expression>&& expr)
-    : m_op(op), m_rhs(std::move(expr)) {}
+      : m_op(op), m_rhs(std::move(expr)) {}
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::UnaryOperation || Expression::isOfType(type);
@@ -65,7 +66,7 @@ class BinaryOperation final : public Expression {
   BinaryOperation(char op,
                   std::unique_ptr<Expression>&& lhs,
                   std::unique_ptr<Expression>&& rhs)
-    : m_op(op), m_lhs(std::move(lhs)), m_rhs(std::move(rhs)) {}
+      : m_op(op), m_lhs(std::move(lhs)), m_rhs(std::move(rhs)) {}
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::BinaryOperation || Expression::isOfType(type);
@@ -81,8 +82,7 @@ class FunctionCall final : public Expression {
  public:
   FunctionCall(std::string&& name,
                std::vector<std::unique_ptr<Expression>>&& args)
-    : m_name(std::move(name))
-    , m_arguments(std::move(args)) {}
+      : m_name(std::move(name)), m_arguments(std::move(args)) {}
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::FunctionCall || Expression::isOfType(type);
@@ -96,7 +96,7 @@ class ParenthesizedExpression final : public Expression {
 
  public:
   ParenthesizedExpression(std::unique_ptr<Expression>&& inner)
-    : m_inner(std::move(inner)) {}
+      : m_inner(std::move(inner)) {}
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::ParenthesizedExpression ||
@@ -128,10 +128,9 @@ class ParenthesizedExpression final : public Expression {
   inline const ty* to##ty(const Node* node) {                                  \
     assert(!node || is##ty(*node));                                            \
     return static_cast<const ty*>(node);                                       \
-  }                                                                            \
+  }
 
 #include "ASTNodeTypes.h"
 #undef NODE_TYPE
-
 
 }  // namespace ast

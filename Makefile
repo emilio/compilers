@@ -7,9 +7,10 @@ CFLAGS := -Wall -Werror -pedantic -std=c++14 -g
 all: $(TARGETS)
 	@echo > /dev/null
 
-.PHONY: fomat
+.PHONY: format
 format: $(SOURCES)
 	for f in $(SOURCES); do clang-format -i $$f; done
+	for f in $(wildcard *.h); do clang-format -i $$f; done
 
 target:
 	mkdir -p $@

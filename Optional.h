@@ -12,7 +12,7 @@ class Optional {
   };
   bool m_isSome;
 
-public:
+ public:
   Optional() : Optional(None) {}
 
   Optional(decltype(None)) : m_isSome(false) {}
@@ -33,42 +33,26 @@ public:
     return *this;
   }
 
-  bool isSome() const {
-    return m_isSome;
-  }
+  bool isSome() const { return m_isSome; }
 
-  bool isNone() const {
-    return !isSome();
-  }
+  bool isNone() const { return !isSome(); }
 
-  explicit operator bool() const {
-    return isSome();
-  }
+  explicit operator bool() const { return isSome(); }
 
   T& value() {
     assert(isSome());
     return m_value;
   }
 
-  const T& value() const {
-    return const_cast<Optional*>(this)->value();
-  }
+  const T& value() const { return const_cast<Optional*>(this)->value(); }
 
-  T& operator*() {
-    return value();
-  }
+  T& operator*() { return value(); }
 
-  const T& operator*() const {
-    return value();
-  }
+  const T& operator*() const { return value(); }
 
-  T* operator->() {
-    return &value();
-  }
+  T* operator->() { return &value(); }
 
-  const T* operator->() const {
-    return &value();
-  }
+  const T* operator->() const { return &value(); }
 
   template <typename... Args>
   void set(Args&&... aArgs) {
@@ -83,9 +67,7 @@ public:
     }
   }
 
-  ~Optional() {
-    clear();
-  }
+  ~Optional() { clear(); }
 };
 
 template <typename T>
