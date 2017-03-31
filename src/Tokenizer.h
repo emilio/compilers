@@ -63,8 +63,7 @@ struct Span {
   std::size_t column;
 
   Span(std::size_t line, std::size_t column) : line(line), column(column) {}
-
-  Span() : Span(0, 0){};
+  Span() : Span(0, 0) {}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Span& span) {
@@ -96,6 +95,7 @@ class Token {
   Token(Token&& other) {
     m_type = other.m_type;
     m_value = other.m_value;
+    m_span = other.m_span;
     if (m_type == TokenType::Identifier)
       other.m_value.m_ident = nullptr;
   }
