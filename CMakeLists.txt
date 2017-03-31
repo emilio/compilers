@@ -60,3 +60,9 @@ foreach(exec ${EXECUTABLES})
     $<TARGET_OBJECTS:base>
   )
 endforeach()
+
+add_custom_target(format COMMAND
+  find ${CMAKE_SOURCE_DIR}/src -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/tests -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/bin -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;"
+)
