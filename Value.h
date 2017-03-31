@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ostream>
 
 enum class ValueType : uint8_t {
   Integer,
@@ -54,3 +55,6 @@ class Value {
     double m_double;
   };
 };
+
+std::ostream& operator<<(std::ostream&, const Value&);
+std::ostream& operator<<(std::ostream& os, const ValueType& type);

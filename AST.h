@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Value.h"
+#include "ASTDumper.h"
 
 namespace ast {
 
@@ -17,6 +18,8 @@ enum class NodeType {
 class Node {
  public:
   virtual bool isOfType(NodeType) const = 0;
+  virtual const char* name() const = 0;
+  virtual void dump(ASTDumper) const = 0;
   virtual ~Node() = default;
 };
 
@@ -35,6 +38,9 @@ class ConstantExpression final : public Expression {
  public:
   ConstantExpression(Value value) : m_value(value) {}
 
+  const char* name() const final { return "ConstantExpression"; }
+  void dump(ASTDumper) const final;
+
   bool isOfType(NodeType type) const override {
     return type == NodeType::ConstantExpression || Expression::isOfType(type);
   }
@@ -49,6 +55,9 @@ class UnaryOperation final : public Expression {
  public:
   UnaryOperation(char op, std::unique_ptr<Expression>&& expr)
       : m_op(op), m_rhs(std::move(expr)) {}
+
+  const char* name() const final { return "UnaryOperation"; }
+  void dump(ASTDumper) const final;
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::UnaryOperation || Expression::isOfType(type);
@@ -68,6 +77,9 @@ class BinaryOperation final : public Expression {
                   std::unique_ptr<Expression>&& rhs)
       : m_op(op), m_lhs(std::move(lhs)), m_rhs(std::move(rhs)) {}
 
+  const char* name() const final { return "BinaryOperation"; }
+  void dump(ASTDumper) const final;
+
   bool isOfType(NodeType type) const override {
     return type == NodeType::BinaryOperation || Expression::isOfType(type);
   }
@@ -84,6 +96,9 @@ class FunctionCall final : public Expression {
                std::vector<std::unique_ptr<Expression>>&& args)
       : m_name(std::move(name)), m_arguments(std::move(args)) {}
 
+  const char* name() const final { return "FunctionCall"; }
+  void dump(ASTDumper) const final;
+
   bool isOfType(NodeType type) const override {
     return type == NodeType::FunctionCall || Expression::isOfType(type);
   }
@@ -97,6 +112,9 @@ class ParenthesizedExpression final : public Expression {
  public:
   ParenthesizedExpression(std::unique_ptr<Expression>&& inner)
       : m_inner(std::move(inner)) {}
+
+  const char* name() const final { return "ParenthesizedExpression"; }
+  void dump(ASTDumper) const final;
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::ParenthesizedExpression ||

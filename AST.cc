@@ -3,6 +3,10 @@
 
 namespace ast {
 
+void ConstantExpression::dump(ASTDumper dumper) const {
+  dumper << name() << " " << m_value;
+}
+
 Value BinaryOperation::evaluate() const {
   Value left = m_lhs->evaluate();
   Value right = m_rhs->evaluate();
@@ -32,6 +36,12 @@ Value BinaryOperation::evaluate() const {
   return Value::createInt(0);
 }
 
+void BinaryOperation::dump(ASTDumper dumper) const {
+  dumper << name() << "(" << m_op << ")";
+  m_lhs->dump(dumper);
+  m_rhs->dump(dumper);
+}
+
 Value UnaryOperation::evaluate() const {
   Value inner = m_rhs->evaluate();
 
@@ -51,6 +61,11 @@ Value UnaryOperation::evaluate() const {
   return Value::createInt(0);
 }
 
+void UnaryOperation::dump(ASTDumper dumper) const {
+  dumper << name() << "(" << m_op << ")";
+  m_rhs->dump(dumper);
+}
+
 Value FunctionCall::evaluate() const {
   if (m_name == "cos" && m_arguments.size() == 1) {
     double val = m_arguments[0]->evaluate().normalizedValue();
@@ -59,6 +74,17 @@ Value FunctionCall::evaluate() const {
 
   assert(false);  // TODO(emilio): This is actually pretty reachable.
   return Value::createDouble(0.0);
+}
+
+void FunctionCall::dump(ASTDumper dumper) const {
+  dumper << name() << "(" << m_name << ")";
+  for (const auto& arg : m_arguments)
+    arg->dump(dumper);
+}
+
+void ParenthesizedExpression::dump(ASTDumper dumper) const {
+  dumper << name();
+  m_inner->dump(dumper);
 }
 
 }  // namespace ast

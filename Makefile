@@ -1,4 +1,4 @@
-TARGETS := target/TokenizerTest target/EvaluatorTest # parser evaluator
+TARGETS := target/TokenizerTest target/EvaluatorTest target/DumperTest # parser evaluator
 SOURCES := $(wildcard *.cc)
 TARGET_OBJS := $(patsubst %.cc, target/%.o, $(SOURCES))
 CFLAGS := -Wall -Werror -pedantic -std=c++14 -g
