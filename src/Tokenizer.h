@@ -45,10 +45,9 @@ struct Span {
   std::size_t line;
   std::size_t column;
 
-  Span(std::size_t line, std::size_t column)
-   : line(line), column(column) {}
+  Span(std::size_t line, std::size_t column) : line(line), column(column) {}
 
-  Span() : Span(0, 0) {};
+  Span() : Span(0, 0){};
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Span& span) {
@@ -65,7 +64,7 @@ class Token {
     char m_op;
   } m_value;
 
-  explicit Token(TokenType type, Span span) : m_type(type), m_span(span) {};
+  explicit Token(TokenType type, Span span) : m_type(type), m_span(span){};
 
  public:
   Token& operator=(const Token& other) {
@@ -108,16 +107,12 @@ class Token {
   }
 
   static Token createOfType(TokenType type, Span span) {
-    assert(type != TokenType::Number &&
-           type != TokenType::Float &&
-           type != TokenType::Operator &&
-           type != TokenType::Identifier);
+    assert(type != TokenType::Number && type != TokenType::Float &&
+           type != TokenType::Operator && type != TokenType::Identifier);
     return Token(type, span);
   }
 
-  static Token createIdent(const char* string,
-                           std::size_t length,
-                           Span span) {
+  static Token createIdent(const char* string, std::size_t length, Span span) {
     Token tok(TokenType::Identifier, span);
     tok.m_value.m_ident = static_cast<char*>(malloc(length + 1));
     memcpy(tok.m_value.m_ident, string, length);
@@ -188,7 +183,7 @@ class Tokenizer {
  public:
   Span location() const { return m_location; }
   const char* errorMessage() const { return m_error; }
-  Tokenizer(Reader& reader) : m_reader(reader) {};
+  Tokenizer(Reader& reader) : m_reader(reader){};
   Optional<Token> nextToken();
 
  private:
@@ -202,6 +197,6 @@ class Tokenizer {
 
   Reader& m_reader;
   Span m_location;
-  const char* m_error { nullptr };
+  const char* m_error{nullptr};
   Optional<char> m_lastChar;
 };

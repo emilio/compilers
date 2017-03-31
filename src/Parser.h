@@ -41,6 +41,6 @@ class Parser {
   // We need this lookahead token :(
   Optional<Token> m_lastToken;
 
-  std::unique_ptr<ast::Node> m_astRoot { nullptr };
-  std::unique_ptr<ParseError> m_parseError { nullptr };
+  std::unique_ptr<ast::Node> m_astRoot{nullptr};
+  std::unique_ptr<ParseError> m_parseError{nullptr};
 };

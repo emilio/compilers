@@ -1,6 +1,5 @@
 #include "Value.h"
 
-
 std::ostream& operator<<(std::ostream& os, const ValueType& type) {
   switch (type) {
     case ValueType::Float:
@@ -12,11 +11,7 @@ std::ostream& operator<<(std::ostream& os, const ValueType& type) {
   return os;
 }
 
-
 std::ostream& operator<<(std::ostream& os, const Value& value) {
-  return os << "Value("
-            << value.type()
-            << ", "
-            << value.normalizedValue()
+  return os << "Value(" << value.type() << ", " << value.normalizedValue()
             << ")";
 }

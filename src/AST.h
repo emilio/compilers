@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 
-#include "Value.h"
 #include "ASTDumper.h"
+#include "Value.h"
 
 namespace ast {
 

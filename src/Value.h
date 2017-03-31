@@ -47,7 +47,7 @@ class Value {
   }
 
  private:
-  explicit Value(ValueType type) : m_type(type) {};
+  explicit Value(ValueType type) : m_type(type){};
 
   ValueType m_type;
   union {

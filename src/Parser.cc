@@ -129,8 +129,7 @@ std::unique_ptr<ast::Expression> Parser::parseExpression() {
     auto rhs = parseProduct();
     if (!rhs)
       return nullptr;
-    expr = std::make_unique<ast::BinaryOperation>(tok->op(),
-                                                  std::move(expr),
+    expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),
                                                   std::move(rhs));
   }
 }
@@ -152,8 +151,7 @@ std::unique_ptr<ast::Expression> Parser::parseProduct() {
     auto rhs = parseOneExpression();
     if (!rhs)
       return nullptr;
-    expr = std::make_unique<ast::BinaryOperation>(tok->op(),
-                                                  std::move(expr),
+    expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),
                                                   std::move(rhs));
   }
 }

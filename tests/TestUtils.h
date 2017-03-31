@@ -1,9 +1,9 @@
 #pragma once
 
-#include "TestReader.h"
 #include "Parser.h"
+#include "TestReader.h"
 
-template<typename Callback>
+template <typename Callback>
 void parse(const char* str, Callback cb) {
   TestReader reader(str);
   Tokenizer tokenizer(reader);

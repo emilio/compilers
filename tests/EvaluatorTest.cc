@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "TestUtils.h"
+#include "gtest/gtest.h"
 
 void assertExprValue(const char* expr, double val) {
   parse(expr, [val](ast::Node* node, const ParseError* error) {

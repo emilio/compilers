@@ -29,7 +29,6 @@ Value BinaryOperation::evaluate() const {
   IMPL_BIN_OP('*', *)
   IMPL_BIN_OP('/', /)
 
-
 #undef IMPL_BIN_OP
 
   assert(false);  // Again, easily reachable, need to implement other operators.

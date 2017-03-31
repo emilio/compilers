@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <iostream>
+#include "AST.h"
 #include "FileReader.h"
 #include "Parser.h"
 #include "Tokenizer.h"
-#include "AST.h"
 
 // TODO(emilio): This should probably become a proper unit test with gtest or
 // something like that.
