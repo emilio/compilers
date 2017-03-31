@@ -46,7 +46,7 @@ static bool isOperator(char which) {
 
 static bool isTokenSeparator(char which) {
   return isWhitespace(which) || isOperator(which) || which == '(' ||
-         which == ')' || !which;
+         which == ',' || which == ')' || !which;
 }
 
 char Tokenizer::peekChar() {

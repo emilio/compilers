@@ -82,10 +82,28 @@ void UnaryOperation::dump(ASTDumper dumper) const {
   m_rhs->dump(dumper);
 }
 
+// I didn't chose the name, the teacher did :)
+inline double sqr(double of) {
+  return ::sqrt(of);
+}
+
 Value FunctionCall::evaluate() const {
-  if (m_name == "cos" && m_arguments.size() == 1) {
+#define IMPL_ONE_ARG_FN(fn_name)                               \
+  if (m_name == #fn_name && m_arguments.size() == 1) {         \
+    double val = m_arguments[0]->evaluate().normalizedValue(); \
+    return Value::createDouble(fn_name(val));                  \
+  }
+
+  IMPL_ONE_ARG_FN(sin);
+  IMPL_ONE_ARG_FN(cos);
+  IMPL_ONE_ARG_FN(abs);
+  IMPL_ONE_ARG_FN(sqr);
+
+  // Just to test sqr easily.
+  if (m_name == "pow" && m_arguments.size() == 2) {
     double val = m_arguments[0]->evaluate().normalizedValue();
-    return Value::createDouble(cos(val));
+    double exp = m_arguments[1]->evaluate().normalizedValue();
+    return Value::createDouble(pow(val, exp));
   }
 
   assert(false);  // TODO(emilio): This is actually pretty reachable.

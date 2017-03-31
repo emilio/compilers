@@ -33,6 +33,23 @@ TEST(Evaluator, OperatorPrecedence) {
   assertExprValue("6 * 2 + 6 * 5", 42.0);
 }
 
+TEST(Evaluator, Cos) {
+  assertExprValue("1 + cos(0)", 2.0);
+}
+
+TEST(Evaluator, Sin) {
+  assertExprValue("1 + sin(0)", 1.0);
+}
+
+TEST(Evaluator, Abs) {
+  assertExprValue("1 + abs(-1200)", 1201.0);
+}
+
+TEST(Evaluator, Sqr) {
+  // TODO(emilio): Perhaps we should do approx_eq or something.
+  assertExprValue("sqr(pow(10, 2))", 10.0);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
