@@ -108,24 +108,52 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
   return nullptr;
 }
 
+static inline bool isProductOperation(char op) {
+  return op == '*' || op == '/';
+}
+
 std::unique_ptr<ast::Expression> Parser::parseExpression() {
+  auto expr = parseProduct();
+  if (!expr)
+    return nullptr;
+
+  while (true) {
+    auto tok = nextToken();
+    if (!tok)
+      return noteParseError(m_tokenizer.errorMessage());
+    if (tok->type() != TokenType::Operator) {
+      m_lastToken = std::move(tok);
+      return expr;
+    }
+    assert(!isProductOperation(tok->op()));
+    auto rhs = parseProduct();
+    if (!rhs)
+      return nullptr;
+    expr = std::make_unique<ast::BinaryOperation>(tok->op(),
+                                                  std::move(expr),
+                                                  std::move(rhs));
+  }
+}
+
+std::unique_ptr<ast::Expression> Parser::parseProduct() {
   auto expr = parseOneExpression();
   if (!expr)
     return nullptr;
-  auto tok = nextToken();
-  if (!tok)
-    return noteParseError(m_tokenizer.errorMessage());
-  if (tok->type() != TokenType::Operator) {
-    m_lastToken = std::move(tok);
-    return expr;
+
+  while (true) {
+    auto tok = nextToken();
+    if (!tok)
+      return noteParseError(m_tokenizer.errorMessage());
+    if (tok->type() != TokenType::Operator || !isProductOperation(tok->op())) {
+      m_lastToken = std::move(tok);
+      return expr;
+    }
+
+    auto rhs = parseOneExpression();
+    if (!rhs)
+      return nullptr;
+    expr = std::make_unique<ast::BinaryOperation>(tok->op(),
+                                                  std::move(expr),
+                                                  std::move(rhs));
   }
-  char op = tok->op();
-  // TODO(emilio): This is nice, but doesn't handle operator precedence.
-  //
-  // Can we make it handle it easily with this strategy?
-  auto rhs = parseExpression();
-  if (!rhs)
-    return nullptr;
-  return std::make_unique<ast::BinaryOperation>(op, std::move(expr),
-                                                std::move(rhs));
 }

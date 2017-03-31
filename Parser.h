@@ -31,6 +31,8 @@ class Parser {
   std::unique_ptr<ast::Expression> parseOneExpression();
   std::unique_ptr<ast::Expression> parseExpression();
 
+  std::unique_ptr<ast::Expression> parseProduct();
+
   // The return value here is just convenience, it always returns null.
   std::unique_ptr<ast::Expression> noteParseError(std::string&& message);
 
