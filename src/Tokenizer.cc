@@ -50,13 +50,58 @@ bool isAnyOf(char which, char one) {
   return which == one;
 }
 
-static bool isOperator(char which) {
-  return isAnyOf(which, '+', '*', '-', '/');
+static Optional<Operator> toOperator(char first,
+                                     char second,
+                                     bool& consumedSecond) {
+  consumedSecond = false;
+#define SIMPLE_CASE(op_, single_, double_, equals_) \
+  case op_:                                         \
+    if (second == op_) {                            \
+      consumedSecond = true;                        \
+      return Some(Operator::double_);               \
+    }                                               \
+    if (second == '=') {                            \
+      consumedSecond = true;                        \
+      return Some(Operator::equals_);               \
+    }                                               \
+    return Some(Operator::single_);
+
+#define SIMPLE_CASE2(op_, single_, equals_) \
+  case op_:                                 \
+    if (second == '=') {                    \
+      consumedSecond = true;                \
+      return Some(Operator::equals_);       \
+    }                                       \
+    return Some(Operator::single_);
+
+  switch (first) {
+    SIMPLE_CASE('+', Plus, PlusPlus, PlusEquals)
+    SIMPLE_CASE('-', Minus, MinusMinus, MinusEquals)
+    SIMPLE_CASE('<', Lt, Shl, Le)
+    SIMPLE_CASE('>', Gt, Shr, Ge)
+    SIMPLE_CASE('&', And, AndAnd, AndEquals)
+    SIMPLE_CASE('|', Or, OrOr, OrEquals)
+    SIMPLE_CASE2('*', Star, StarEquals)
+    SIMPLE_CASE2('/', Slash, SlashEquals)
+    SIMPLE_CASE2('=', Equals, EqualsEquals)
+    default:
+      return None;
+  }
+}
+
+static bool isSingleCharOperator(char which) {
+  bool unused;
+  return bool(toOperator(which, '\0', unused));
 }
 
 static bool isTokenSeparator(char which) {
-  return isWhitespace(which) || isOperator(which) ||
+  return isWhitespace(which) || isSingleCharOperator(which) ||
          isAnyOf(which, '(', ',', ')', '\0');
+}
+
+static bool isKeyword(const std::string& which) {
+  // TODO.
+  return false;
 }
 
 char Tokenizer::peekChar() {
@@ -93,8 +138,15 @@ again:
   if (isWhitespace(next))
     goto again;
 
-  if (isOperator(next))
-    return Some(Token::createOp(next, location));
+  bool consumedSecond;
+  if (Optional<Operator> op = toOperator(next, peekChar(), consumedSecond)) {
+    if (consumedSecond)
+      nextChar();
+    return Some(Token::createOp(*op, location));
+  }
+
+  if (next == ';')
+    return Some(Token::createOfType(TokenType::SemiColon, location));
 
   if (next == ')')
     return Some(Token::createOfType(TokenType::RightParen, location));
@@ -137,6 +189,9 @@ again:
 
     if (!isTokenSeparator(peekChar()))
       return error("Invalid token separator after identifier");
+
+    if (isKeyword(ident))
+      return Some(Token::createKeyword(ident.c_str(), location));
 
     return Some(Token::createIdent(ident.c_str(), location));
   }

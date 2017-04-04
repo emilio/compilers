@@ -15,12 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ASTEvaluator.h"
 #include "TestUtils.h"
 #include "gtest/gtest.h"
 
 void assertExprValue(const char* expr, double val) {
   parse(expr, [val](ast::Node* node, const ParseError* error) {
-    EXPECT_TRUE(toExpression(node)->evaluate().normalizedValue() == val);
+    ast::ASTEvaluatorContext ctx;
+    EXPECT_TRUE(toExpression(node)->evaluate(ctx).normalizedValue() == val);
   });
 }
 

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "ASTDumper.h"
+#include "Tokenizer.h"
 #include "Value.h"
 
 namespace ast {
@@ -31,6 +32,8 @@ enum class NodeType {
 #include "ASTNodeTypes.h"
 #undef NODE_TYPE
 };
+
+class ASTEvaluatorContext;
 
 class Node {
  public:
@@ -46,14 +49,31 @@ class Expression : public Node {
     return type == NodeType::Expression;
   }
 
-  virtual Value evaluate() const = 0;
+  virtual Value evaluate(ASTEvaluatorContext&) const = 0;
+};
+
+class VariableBinding final : public Expression {
+  std::string m_name;
+
+ public:
+  explicit VariableBinding(const char* name) : m_name(name) {}
+
+  const char* name() const final { return "VariableBinding"; }
+
+  void dump(ASTDumper) const final;
+
+  bool isOfType(NodeType type) const final {
+    return type == NodeType::Expression;
+  }
+
+  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class ConstantExpression final : public Expression {
   Value m_value;
 
  public:
-  ConstantExpression(Value value) : m_value(value) {}
+  explicit ConstantExpression(Value value) : m_value(value) {}
 
   const char* name() const final { return "ConstantExpression"; }
   void dump(ASTDumper) const final;
@@ -62,15 +82,15 @@ class ConstantExpression final : public Expression {
     return type == NodeType::ConstantExpression || Expression::isOfType(type);
   }
 
-  Value evaluate() const final { return m_value; }
+  Value evaluate(ASTEvaluatorContext&) const final { return m_value; }
 };
 
 class UnaryOperation final : public Expression {
-  char m_op;
+  Operator m_op;
   std::unique_ptr<Expression> m_rhs;
 
  public:
-  UnaryOperation(char op, std::unique_ptr<Expression>&& expr)
+  UnaryOperation(Operator op, std::unique_ptr<Expression>&& expr)
       : m_op(op), m_rhs(std::move(expr)) {}
 
   const char* name() const final { return "UnaryOperation"; }
@@ -80,16 +100,16 @@ class UnaryOperation final : public Expression {
     return type == NodeType::UnaryOperation || Expression::isOfType(type);
   }
 
-  Value evaluate() const final;
+  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class BinaryOperation final : public Expression {
-  char m_op;
+  Operator m_op;
   std::unique_ptr<Expression> m_lhs;
   std::unique_ptr<Expression> m_rhs;
 
  public:
-  BinaryOperation(char op,
+  BinaryOperation(Operator op,
                   std::unique_ptr<Expression>&& lhs,
                   std::unique_ptr<Expression>&& rhs)
       : m_op(op), m_lhs(std::move(lhs)), m_rhs(std::move(rhs)) {}
@@ -101,7 +121,7 @@ class BinaryOperation final : public Expression {
     return type == NodeType::BinaryOperation || Expression::isOfType(type);
   }
 
-  Value evaluate() const final;
+  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class FunctionCall final : public Expression {
@@ -120,7 +140,7 @@ class FunctionCall final : public Expression {
     return type == NodeType::FunctionCall || Expression::isOfType(type);
   }
 
-  Value evaluate() const final;
+  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class ParenthesizedExpression final : public Expression {
@@ -138,7 +158,9 @@ class ParenthesizedExpression final : public Expression {
            Expression::isOfType(type);
   }
 
-  Value evaluate() const final { return m_inner->evaluate(); }
+  Value evaluate(ASTEvaluatorContext& ctx) const final {
+    return m_inner->evaluate(ctx);
+  }
 };
 
 #define NODE_TYPE(ty)                                                          \

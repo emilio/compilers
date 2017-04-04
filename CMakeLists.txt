@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 # In order to use YouCompleteMe with Vim.
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 # Download and unpack gtest at configure time
@@ -27,6 +28,7 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 
 add_library(base OBJECT
   src/AST.cc
+  src/ASTEvaluator.cc
   src/Parser.cc
   src/Tokenizer.cc
   src/Value.cc

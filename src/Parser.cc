@@ -49,6 +49,11 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
   Optional<Token> tok = nextToken();
 
   switch (tok->type()) {
+    case TokenType::SemiColon:
+      return noteParseError("Stray semicolon");
+    case TokenType::Keyword: {
+      return noteParseError("TODO");
+    }
     case TokenType::Float:
     case TokenType::Number: {
       // Maybe it's a standalone token, maybe it's the lhs of an arbitrarily
@@ -73,15 +78,12 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
       std::string name = tok->ident();
 
       Optional<Token> tok = nextToken();
-      if (!tok)
-        return noteParseError(m_tokenizer.errorMessage());
+      if (!tok || tok->type() != TokenType::LeftParen) {
+        m_lastToken = std::move(tok);
+        return std::make_unique<ast::VariableBinding>(tok->ident());
+      }
 
-      // We only support function calls, so that makes it a bit easier, we could
-      // also set m_lastToken to tok here and return a variable binding if
-      // needed.
-      if (tok->type() != TokenType::LeftParen)
-        return noteParseError("Expected opening parenthesis for function call");
-
+      // Otherwise this is a function call.
       tok = nextToken();
       if (!tok)
         return noteParseError(m_tokenizer.errorMessage());
@@ -111,7 +113,7 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
     case TokenType::Comma:
       return noteParseError("Unexpected standalone comma");
     case TokenType::Operator: {
-      char op = tok->op();
+      Operator op = tok->op();
       auto target = parseExpression();
       if (!target)
         return nullptr;
@@ -125,8 +127,8 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
   return nullptr;
 }
 
-static inline bool isProductOperation(char op) {
-  return op == '*' || op == '/';
+static inline bool isProductOperation(Operator op) {
+  return op == Operator::Star || op == Operator::Slash;
 }
 
 std::unique_ptr<ast::Expression> Parser::parseExpression() {

@@ -24,19 +24,108 @@
 
 #include "Optional.h"
 
+enum class Operator : unsigned char {
+  Plus,
+  PlusPlus,
+  PlusEquals,
+  Minus,
+  MinusMinus,
+  MinusEquals,
+  Star,
+  StarEquals,
+  Slash,
+  SlashEquals,
+  Equals,
+  EqualsEquals,
+  And,
+  AndAnd,
+  AndEquals,
+  Or,
+  OrOr,
+  OrEquals,
+  Lt,
+  Shl,
+  Le,
+  Gt,
+  Shr,
+  Ge,
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Operator& op) {
+  switch (op) {
+    case Operator::Plus:
+      return os << "Plus";
+    case Operator::PlusPlus:
+      return os << "PlusPlus";
+    case Operator::PlusEquals:
+      return os << "PlusEquals";
+    case Operator::Minus:
+      return os << "Minus";
+    case Operator::MinusMinus:
+      return os << "MinusMinus";
+    case Operator::MinusEquals:
+      return os << "MinusEquals";
+    case Operator::Star:
+      return os << "Star";
+    case Operator::StarEquals:
+      return os << "StarEquals";
+    case Operator::Slash:
+      return os << "Slash";
+    case Operator::SlashEquals:
+      return os << "SlashEquals";
+    case Operator::Equals:
+      return os << "Equals";
+    case Operator::EqualsEquals:
+      return os << "EqualsEquals";
+    case Operator::And:
+      return os << "And";
+    case Operator::AndAnd:
+      return os << "AndAnd";
+    case Operator::AndEquals:
+      return os << "AndEquals";
+    case Operator::Or:
+      return os << "Or";
+    case Operator::OrOr:
+      return os << "OrOr";
+    case Operator::OrEquals:
+      return os << "OrEquals";
+    case Operator::Lt:
+      return os << "Lt";
+    case Operator::Le:
+      return os << "Le";
+    case Operator::Shl:
+      return os << "Shl";
+    case Operator::Gt:
+      return os << "Gt";
+    case Operator::Ge:
+      return os << "Ge";
+    case Operator::Shr:
+      return os << "Shr";
+  }
+
+  assert(false);
+  return os;
+}
+
 enum class TokenType : unsigned char {
   Comma,
   Number,
   Float,
   Identifier,
+  Keyword,
   Operator,
   LeftParen,
   RightParen,
+  SemiColon,
   Eof,
 };
 
 inline std::ostream& operator<<(std::ostream& os, TokenType type) {
   switch (type) {
+    case TokenType::Keyword:
+      return os << "Keyword";
+    case TokenType::SemiColon:
+      return os << "SemiColon";
     case TokenType::Comma:
       return os << "Comma";
     case TokenType::Number:
@@ -70,6 +159,10 @@ inline std::ostream& operator<<(std::ostream& os, const Span& span) {
   return os << "Span(" << span.line << ", " << span.column << ")";
 }
 
+inline bool typeHoldsIdentifier(TokenType type) {
+  return type == TokenType::Identifier || type == TokenType::Keyword;
+}
+
 class Token {
   TokenType m_type;
   Span m_span;
@@ -77,17 +170,31 @@ class Token {
     char* m_ident;
     unsigned m_number;
     double m_float;
-    char m_op;
+    Operator m_op;
   } m_value;
 
   explicit Token(TokenType type, Span span) : m_type(type), m_span(span){};
+
+  bool typeHoldsIdentifier() const { return ::typeHoldsIdentifier(type()); }
+
+  static Token createIdentHolderOfType(TokenType type,
+                                       const char* string,
+                                       std::size_t length,
+                                       Span span) {
+    assert(::typeHoldsIdentifier(type));
+    Token tok(type, span);
+    tok.m_value.m_ident = static_cast<char*>(malloc(length + 1));
+    memcpy(tok.m_value.m_ident, string, length);
+    tok.m_value.m_ident[length] = '\0';
+    return tok;
+  }
 
  public:
   Token& operator=(const Token& other) {
     m_type = other.m_type;
     m_span = other.m_span;
     m_value = other.m_value;
-    if (type() == TokenType::Identifier)
+    if (typeHoldsIdentifier())
       m_value.m_ident = strdup(other.m_value.m_ident);
     return *this;
   }
@@ -96,16 +203,16 @@ class Token {
     m_type = other.m_type;
     m_value = other.m_value;
     m_span = other.m_span;
-    if (m_type == TokenType::Identifier)
+    if (typeHoldsIdentifier())
       other.m_value.m_ident = nullptr;
   }
 
   ~Token() {
-    if (type() == TokenType::Identifier && m_value.m_ident)
+    if (typeHoldsIdentifier() && m_value.m_ident)
       free(m_value.m_ident);
   }
 
-  static Token createOp(char op, Span location) {
+  static Token createOp(Operator op, Span location) {
     Token tok(TokenType::Operator, location);
     tok.m_value.m_op = op;
     return tok;
@@ -125,20 +232,35 @@ class Token {
 
   static Token createOfType(TokenType type, Span span) {
     assert(type != TokenType::Number && type != TokenType::Float &&
-           type != TokenType::Operator && type != TokenType::Identifier);
+           type != TokenType::Operator && type != TokenType::Identifier &&
+           type != TokenType::Keyword);
     return Token(type, span);
   }
 
   static Token createIdent(const char* string, std::size_t length, Span span) {
-    Token tok(TokenType::Identifier, span);
-    tok.m_value.m_ident = static_cast<char*>(malloc(length + 1));
-    memcpy(tok.m_value.m_ident, string, length);
-    tok.m_value.m_ident[length] = '\0';
-    return tok;
+    return createIdentHolderOfType(TokenType::Identifier, string, length, span);
+  }
+
+  static Token createIdent(const std::string& str, Span span) {
+    return createIdent(str.c_str(), str.length(), span);
   }
 
   static Token createIdent(const char* string, Span span) {
     return createIdent(string, strlen(string), span);
+  }
+
+  static Token createKeyword(const char* string,
+                             std::size_t length,
+                             Span span) {
+    return createIdentHolderOfType(TokenType::Keyword, string, length, span);
+  }
+
+  static Token createKeyword(const std::string& str, Span span) {
+    return createKeyword(str.c_str(), str.length(), span);
+  }
+
+  static Token createKeyword(const char* string, Span span) {
+    return createKeyword(string, strlen(string), span);
   }
 
   TokenType type() const { return m_type; }
@@ -154,7 +276,7 @@ class Token {
     return m_value.m_float;
   }
 
-  char op() const {
+  Operator op() const {
     assert(type() == TokenType::Operator);
     return m_value.m_op;
   }

@@ -17,6 +17,7 @@
 
 #include "AST.h"
 #include <cmath>
+#include "ASTEvaluator.h"
 
 namespace ast {
 
@@ -24,12 +25,24 @@ void ConstantExpression::dump(ASTDumper dumper) const {
   dumper << name() << " " << m_value;
 }
 
-Value BinaryOperation::evaluate() const {
-  Value left = m_lhs->evaluate();
-  Value right = m_rhs->evaluate();
+void VariableBinding::dump(ASTDumper dumper) const {
+  dumper << name() << " " << m_name;
+}
 
-#define IMPL_BIN_OP(ch, op)                                                    \
-  if (m_op == ch) {                                                            \
+Value VariableBinding::evaluate(ASTEvaluatorContext& ctx) const {
+  Optional<Value> val = ctx.resolveVariableBinding(m_name);
+  // TODO(emilio): Need to do proper error handling!
+  if (!val)
+    return Value::createInt(0);
+  return *val;
+}
+
+Value BinaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
+  Value left = m_lhs->evaluate(ctx);
+  Value right = m_rhs->evaluate(ctx);
+
+#define IMPL_BIN_OP(operator_, op)                                             \
+  if (m_op == Operator::operator_) {                                           \
     if (left.type() != right.type())                                           \
       return Value::createDouble(left.normalizedValue()                        \
                                      op right.normalizedValue());              \
@@ -41,10 +54,10 @@ Value BinaryOperation::evaluate() const {
     }                                                                          \
   }
 
-  IMPL_BIN_OP('+', +)  // Nasty
-  IMPL_BIN_OP('-', -)
-  IMPL_BIN_OP('*', *)
-  IMPL_BIN_OP('/', /)
+  IMPL_BIN_OP(Plus, +)  // Nasty
+  IMPL_BIN_OP(Minus, -)
+  IMPL_BIN_OP(Star, *)
+  IMPL_BIN_OP(Slash, /)
 
 #undef IMPL_BIN_OP
 
@@ -58,23 +71,23 @@ void BinaryOperation::dump(ASTDumper dumper) const {
   m_rhs->dump(dumper);
 }
 
-Value UnaryOperation::evaluate() const {
-  Value inner = m_rhs->evaluate();
+Value UnaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
+  Value inner = m_rhs->evaluate(ctx);
 
-  if (m_op == '+')
-    return inner;
-
-  if (m_op == '-') {
-    switch (inner.type()) {
-      case ValueType::Integer:
-        return Value::createInt(-inner.intValue());
-      case ValueType::Float:
-        return Value::createDouble(-inner.doubleValue());
-    }
+  switch (m_op) {
+    case Operator::Plus:
+      return inner;
+    case Operator::Minus:
+      switch (inner.type()) {
+        case ValueType::Integer:
+          return Value::createInt(-inner.intValue());
+        case ValueType::Float:
+          return Value::createDouble(-inner.doubleValue());
+      }
+    default:
+      assert(false && "Invalid unary operator!");
+      return Value::createInt(0);
   }
-
-  assert(false);
-  return Value::createInt(0);
 }
 
 void UnaryOperation::dump(ASTDumper dumper) const {
@@ -82,27 +95,22 @@ void UnaryOperation::dump(ASTDumper dumper) const {
   m_rhs->dump(dumper);
 }
 
-// I didn't chose the name, the teacher did :)
-inline double sqr(double of) {
-  return ::sqrt(of);
-}
-
-Value FunctionCall::evaluate() const {
-#define IMPL_ONE_ARG_FN(fn_name)                               \
-  if (m_name == #fn_name && m_arguments.size() == 1) {         \
-    double val = m_arguments[0]->evaluate().normalizedValue(); \
-    return Value::createDouble(fn_name(val));                  \
+Value FunctionCall::evaluate(ASTEvaluatorContext& ctx) const {
+#define IMPL_ONE_ARG_FN(fn_name, matching_fn)                     \
+  if (m_name == #fn_name && m_arguments.size() == 1) {            \
+    double val = m_arguments[0]->evaluate(ctx).normalizedValue(); \
+    return Value::createDouble(matching_fn(val));                 \
   }
 
-  IMPL_ONE_ARG_FN(sin);
-  IMPL_ONE_ARG_FN(cos);
-  IMPL_ONE_ARG_FN(abs);
-  IMPL_ONE_ARG_FN(sqr);
+  IMPL_ONE_ARG_FN(sin, sin);
+  IMPL_ONE_ARG_FN(cos, cos);
+  IMPL_ONE_ARG_FN(abs, fabs);
+  IMPL_ONE_ARG_FN(sqr, sqrt);
 
   // Just to test sqr easily.
   if (m_name == "pow" && m_arguments.size() == 2) {
-    double val = m_arguments[0]->evaluate().normalizedValue();
-    double exp = m_arguments[1]->evaluate().normalizedValue();
+    double val = m_arguments[0]->evaluate(ctx).normalizedValue();
+    double exp = m_arguments[1]->evaluate(ctx).normalizedValue();
     return Value::createDouble(pow(val, exp));
   }
 

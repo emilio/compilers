@@ -17,6 +17,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include "ASTEvaluator.h"
 #include "FileReader.h"
 #include "Parser.h"
 #include "Tokenizer.h"
@@ -31,7 +32,8 @@ int main(int, const char**) {
 
   if (ast::Node* node = parser.parse()) {
     if (isExpression(node)) {
-      Value val = toExpression(node)->evaluate();
+      ast::ASTEvaluatorContext ctx;
+      Value val = toExpression(node)->evaluate(ctx);
       std::cout << val.normalizedValue() << std::endl;
     }
   } else if (const ParseError* error = parser.error()) {
