@@ -63,7 +63,7 @@ class VariableBinding final : public Expression {
   void dump(ASTDumper) const final;
 
   bool isOfType(NodeType type) const final {
-    return type == NodeType::Expression;
+    return type == NodeType::VariableBinding || Expression::isOfType(type);
   }
 
   Value evaluate(ASTEvaluatorContext&) const final;
@@ -101,6 +101,64 @@ class UnaryOperation final : public Expression {
   }
 
   Value evaluate(ASTEvaluatorContext&) const final;
+};
+
+// A statement is an expression terminated by a semicolon.
+//
+// Evaluating this will always yield a zero, but it may have side effects like
+// setting variable bindings.
+class Statement final : public Expression {
+  std::unique_ptr<Expression> m_inner;
+
+ public:
+  explicit Statement(std::unique_ptr<Expression>&& inner)
+      : m_inner(std::move(inner)) {}
+
+  const char* name() const final { return "Statement"; }
+
+  bool isOfType(NodeType type) const final {
+    return type == NodeType::Statement || Expression::isOfType(type);
+  }
+
+  void dump(ASTDumper) const final;
+
+  Value evaluate(ASTEvaluatorContext& ctx) const final {
+    m_inner->evaluate(ctx);
+
+    // TODO(emilio): We shouldn't be returning any value from here, should we?
+    // This is hacky, at best.
+    return Value::createInt(0);
+  }
+};
+
+// A block is a list of statements, with a final expression, potentially.
+class Block final : public Expression {
+  std::vector<std::unique_ptr<Statement>> m_statements;
+  std::unique_ptr<Expression> m_lastExpression; // may be null.
+ public:
+  explicit Block(std::vector<std::unique_ptr<Statement>>&& statements,
+                 std::unique_ptr<Expression>&& lastExpression)
+    : m_statements(std::move(statements))
+    , m_lastExpression(std::move(lastExpression)) {}
+
+  const char* name() const final { return "Statement"; }
+
+  bool isOfType(NodeType type) const final {
+    return type == NodeType::Block || Expression::isOfType(type);
+  }
+
+  void dump(ASTDumper) const final;
+
+  Value evaluate(ASTEvaluatorContext& ctx) const final {
+    for (auto& statement : m_statements)
+      statement->evaluate(ctx);
+
+    // TODO(emilio): We shouldn't be returning any value from here if there's no
+    // last expression, should we?
+    return m_lastExpression
+      ? m_lastExpression->evaluate(ctx)
+      : Value::createInt(0);
+  }
 };
 
 class BinaryOperation final : public Expression {
