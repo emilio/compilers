@@ -40,13 +40,23 @@ static bool isIdentPart(char which) {
   return isIdentifierStart(which) || isNumeric(which);
 }
 
+template <typename... Args>
+bool isAnyOf(char which, char one, Args... args) {
+  return which == one || isAnyOf(which, args...);
+}
+
+template <>
+bool isAnyOf(char which, char one) {
+  return which == one;
+}
+
 static bool isOperator(char which) {
-  return which == '+' || which == '*' || which == '-' || which == '/';
+  return isAnyOf(which, '+', '*', '-', '/');
 }
 
 static bool isTokenSeparator(char which) {
-  return isWhitespace(which) || isOperator(which) || which == '(' ||
-         which == ',' || which == ')' || !which;
+  return isWhitespace(which) || isOperator(which) ||
+         isAnyOf(which, '(', ',', ')', '\0');
 }
 
 char Tokenizer::peekChar() {
