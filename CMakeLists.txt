@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.7)
 # In order to use YouCompleteMe with Vim.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -pedantic -g" )
 
 # Download and unpack gtest at configure time
 configure_file(cmake/GTest.txt.in gtest-download/CMakeLists.txt)

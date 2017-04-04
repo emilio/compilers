@@ -24,6 +24,7 @@
 enum class ValueType : uint8_t {
   Integer,
   Float,
+  Bool,
 };
 
 class Value {
@@ -34,6 +35,12 @@ class Value {
     return ret;
   }
 
+  static Value createBool(bool value) {
+    Value ret(ValueType::Bool);
+    ret.m_bool = value;
+    return ret;
+  }
+
   static Value createDouble(double value) {
     Value ret(ValueType::Float);
     ret.m_double = value;
@@ -41,6 +48,11 @@ class Value {
   }
 
   ValueType type() const { return m_type; }
+
+  bool boolValue() const {
+    assert(type() == ValueType::Bool);
+    return m_bool;
+  }
 
   int64_t intValue() const {
     assert(type() == ValueType::Integer);
@@ -58,6 +70,8 @@ class Value {
         return doubleValue();
       case ValueType::Integer:
         return intValue();
+      case ValueType::Bool:
+        return boolValue();
     }
     assert(false);
     return 0.0;
@@ -70,6 +84,7 @@ class Value {
   union {
     int64_t m_integer;
     double m_double;
+    bool m_bool;
   };
 };
 

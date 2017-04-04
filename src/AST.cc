@@ -83,6 +83,8 @@ Value UnaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
           return Value::createInt(-inner.intValue());
         case ValueType::Float:
           return Value::createDouble(-inner.doubleValue());
+        case ValueType::Bool:
+          return inner;
       }
     default:
       assert(false && "Invalid unary operator!");
