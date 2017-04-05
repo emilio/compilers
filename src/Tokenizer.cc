@@ -96,7 +96,7 @@ static bool isSingleCharOperator(char which) {
 
 static bool isTokenSeparator(char which) {
   return isWhitespace(which) || isSingleCharOperator(which) ||
-         isAnyOf(which, '(', ',', ')', '\0');
+         isAnyOf(which, '(', ',', ')', '{', '}', ';', '\0');
 }
 
 static bool isKeyword(const std::string& which) {
@@ -153,6 +153,12 @@ again:
 
   if (next == '(')
     return Some(Token::createOfType(TokenType::LeftParen, location));
+
+  if (next == '}')
+    return Some(Token::createOfType(TokenType::RightBrace, location));
+
+  if (next == '{')
+    return Some(Token::createOfType(TokenType::LeftBrace, location));
 
   if (next == ',')
     return Some(Token::createOfType(TokenType::Comma, location));

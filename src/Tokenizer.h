@@ -116,6 +116,8 @@ enum class TokenType : unsigned char {
   Operator,
   LeftParen,
   RightParen,
+  LeftBrace,
+  RightBrace,
   SemiColon,
   Eof,
 };
@@ -140,6 +142,10 @@ inline std::ostream& operator<<(std::ostream& os, TokenType type) {
       return os << "LeftParen";
     case TokenType::RightParen:
       return os << "RightParen";
+    case TokenType::LeftBrace:
+      return os << "LeftBrace";
+    case TokenType::RightBrace:
+      return os << "RightBrace";
     case TokenType::Eof:
       return os << "Eof";
   }

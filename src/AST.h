@@ -134,14 +134,14 @@ class Statement final : public Expression {
 // A block is a list of statements, with a final expression, potentially.
 class Block final : public Expression {
   std::vector<std::unique_ptr<Statement>> m_statements;
-  std::unique_ptr<Expression> m_lastExpression; // may be null.
+  std::unique_ptr<Expression> m_lastExpression;  // may be null.
  public:
   explicit Block(std::vector<std::unique_ptr<Statement>>&& statements,
                  std::unique_ptr<Expression>&& lastExpression)
-    : m_statements(std::move(statements))
-    , m_lastExpression(std::move(lastExpression)) {}
+      : m_statements(std::move(statements)),
+        m_lastExpression(std::move(lastExpression)) {}
 
-  const char* name() const final { return "Statement"; }
+  const char* name() const final { return "Block"; }
 
   bool isOfType(NodeType type) const final {
     return type == NodeType::Block || Expression::isOfType(type);
@@ -155,9 +155,8 @@ class Block final : public Expression {
 
     // TODO(emilio): We shouldn't be returning any value from here if there's no
     // last expression, should we?
-    return m_lastExpression
-      ? m_lastExpression->evaluate(ctx)
-      : Value::createInt(0);
+    return m_lastExpression ? m_lastExpression->evaluate(ctx)
+                            : Value::createInt(0);
   }
 };
 

@@ -73,6 +73,32 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
         return noteParseError("Unbalanced paren");
       return std::make_unique<ast::ParenthesizedExpression>(std::move(inner));
     }
+    case TokenType::LeftBrace: {
+      std::unique_ptr<ast::Expression> lastExpression;
+      std::vector<std::unique_ptr<ast::Statement>> statements;
+      while (true) {
+        Optional<Token> closingBrace = nextToken();
+        if (!closingBrace)
+          return noteParseError("Unfinished block");
+        if (closingBrace->type() == TokenType::RightBrace)
+          return std::make_unique<ast::Block>(std::move(statements), nullptr);
+        m_lastToken = std::move(closingBrace);
+        std::unique_ptr<ast::Expression> inner = parseExpression();
+        if (!inner)
+          return nullptr;
+        Optional<Token> semiColonOrBrace = nextToken();
+        if (!semiColonOrBrace ||
+            (semiColonOrBrace->type() != TokenType::SemiColon &&
+             semiColonOrBrace->type() != TokenType::RightBrace)) {
+          return noteParseError("Unbalanced block, or expected semicolon");
+        }
+        if (semiColonOrBrace->type() == TokenType::RightBrace)
+          return std::make_unique<ast::Block>(std::move(statements),
+                                              std::move(inner));
+        statements.push_back(
+            std::make_unique<ast::Statement>(std::move(inner)));
+      }
+    }
     case TokenType::Identifier: {
       std::vector<std::unique_ptr<ast::Expression>> arguments;
       std::string name = tok->ident();
@@ -80,7 +106,7 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
       Optional<Token> tok = nextToken();
       if (!tok || tok->type() != TokenType::LeftParen) {
         m_lastToken = std::move(tok);
-        return std::make_unique<ast::VariableBinding>(tok->ident());
+        return std::make_unique<ast::VariableBinding>(name.c_str());
       }
 
       // Otherwise this is a function call.
@@ -110,6 +136,8 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
     }
     case TokenType::RightParen:
       return noteParseError("Unbalanced paren");
+    case TokenType::RightBrace:
+      return noteParseError("Unbalanced block");
     case TokenType::Comma:
       return noteParseError("Unexpected standalone comma");
     case TokenType::Operator: {

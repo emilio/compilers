@@ -15,7 +15,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "TestUtils.h"
 #include "gtest/gtest.h"
+
+void assertParses(const char* input) {
+  parse(input,
+        [](ast::Node* node, const ParseError* error) { EXPECT_FALSE(error); });
+}
+
+TEST(Parser, NestedBlocks) {
+  assertParses("{ {} }");
+}
+
+TEST(Parser, MultipleStatementsPlusExpression) {
+  assertParses("{ foo; bar; baz }");
+}
+
+TEST(Parser, MultipleStatementsPlusNestedBlock) {
+  assertParses("{ 2 + 2; foo; { 2 + 3 } }");
+}
+
+TEST(Parser, NestedBlocksStatements) {
+  assertParses("{ { 2 + 2 }; {}; foo; { 2 + 3 }; }");
+}
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

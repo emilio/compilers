@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.7)
 
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Whether to build in `Debug` or `Release` mode." FORCE)
+  endif()
+endif()
+
 # In order to use YouCompleteMe with Vim.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")

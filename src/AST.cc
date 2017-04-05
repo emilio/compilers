@@ -97,6 +97,19 @@ void UnaryOperation::dump(ASTDumper dumper) const {
   m_rhs->dump(dumper);
 }
 
+void Statement::dump(ASTDumper dumper) const {
+  dumper << name();
+  m_inner->dump(dumper);
+}
+
+void Block::dump(ASTDumper dumper) const {
+  dumper << name();
+  for (const auto& statement : m_statements)
+    statement->dump(dumper);
+  if (m_lastExpression)
+    m_lastExpression->dump(dumper);
+}
+
 Value FunctionCall::evaluate(ASTEvaluatorContext& ctx) const {
 #define IMPL_ONE_ARG_FN(fn_name, matching_fn)                     \
   if (m_name == #fn_name && m_arguments.size() == 1) {            \
