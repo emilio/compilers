@@ -51,6 +51,8 @@ Value BinaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
         return Value::createInt(left.intValue() op right.intValue());          \
       case ValueType::Float:                                                   \
         return Value::createDouble(left.doubleValue() op right.doubleValue()); \
+      case ValueType::Bool:                                                    \
+        return Value::createDouble(left.boolValue() op right.boolValue());     \
     }                                                                          \
   }
 

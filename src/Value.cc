@@ -23,6 +23,8 @@ std::ostream& operator<<(std::ostream& os, const ValueType& type) {
       return os << "Float";
     case ValueType::Integer:
       return os << "Integer";
+    case ValueType::Bool:
+      return os << "Bool";
   }
   assert(false);
   return os;
