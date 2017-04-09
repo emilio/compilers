@@ -24,7 +24,7 @@
 
 #include "Optional.h"
 
-enum class Operator : unsigned char {
+enum class Operator : uint8_t {
   Plus,
   PlusPlus,
   PlusEquals,
@@ -107,6 +107,29 @@ inline std::ostream& operator<<(std::ostream& os, const Operator& op) {
   return os;
 }
 
+enum class Keyword : uint8_t {
+  For,
+  While,
+  If,
+  Else,
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Keyword& kw) {
+  switch (kw) {
+    case Keyword::For:
+      return os << "For";
+    case Keyword::While:
+      return os << "While";
+    case Keyword::If:
+      return os << "If";
+    case Keyword::Else:
+      return os << "Else";
+  }
+
+  assert(false);
+  return os;
+}
+
 enum class TokenType : unsigned char {
   Comma,
   Number,
@@ -166,7 +189,7 @@ inline std::ostream& operator<<(std::ostream& os, const Span& span) {
 }
 
 inline bool typeHoldsIdentifier(TokenType type) {
-  return type == TokenType::Identifier || type == TokenType::Keyword;
+  return type == TokenType::Identifier;
 }
 
 class Token {
@@ -177,6 +200,7 @@ class Token {
     unsigned m_number;
     double m_float;
     Operator m_op;
+    Keyword m_keyword;
   } m_value;
 
   explicit Token(TokenType type, Span span) : m_type(type), m_span(span){};
@@ -255,18 +279,10 @@ class Token {
     return createIdent(string, strlen(string), span);
   }
 
-  static Token createKeyword(const char* string,
-                             std::size_t length,
-                             Span span) {
-    return createIdentHolderOfType(TokenType::Keyword, string, length, span);
-  }
-
-  static Token createKeyword(const std::string& str, Span span) {
-    return createKeyword(str.c_str(), str.length(), span);
-  }
-
-  static Token createKeyword(const char* string, Span span) {
-    return createKeyword(string, strlen(string), span);
+  static Token createKeyword(Keyword kw, Span span) {
+    Token tok(TokenType::Keyword, span);
+    tok.m_value.m_keyword = kw;
+    return tok;
   }
 
   TokenType type() const { return m_type; }
@@ -287,8 +303,13 @@ class Token {
     return m_value.m_op;
   }
 
+  Keyword keyword() const {
+    assert(type() == TokenType::Keyword);
+    return m_value.m_keyword;
+  }
+
   const char* ident() const {
-    assert(type() == TokenType::Identifier);
+    assert(typeHoldsIdentifier());
     return m_value.m_ident;
   }
 };

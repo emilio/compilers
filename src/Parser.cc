@@ -52,7 +52,15 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
     case TokenType::SemiColon:
       return noteParseError("Stray semicolon");
     case TokenType::Keyword: {
-      return noteParseError("TODO");
+      switch (tok->keyword()) {
+        case Keyword::If:
+        case Keyword::Else:
+        case Keyword::For:
+        case Keyword::While:
+          return noteParseError("TODO");
+      }
+      assert(false);
+      return noteParseError("Internal error: Unexpected keyword");
     }
     case TokenType::Float:
     case TokenType::Number: {

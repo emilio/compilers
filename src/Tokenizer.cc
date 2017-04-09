@@ -99,9 +99,16 @@ static bool isTokenSeparator(char which) {
          isAnyOf(which, '(', ',', ')', '{', '}', ';', '\0');
 }
 
-static bool isKeyword(const std::string& which) {
-  // TODO.
-  return false;
+static Optional<Keyword> isKeyword(const std::string& which) {
+  if (which == "for")
+    return Some(Keyword::For);
+  if (which == "while")
+    return Some(Keyword::While);
+  if (which == "if")
+    return Some(Keyword::Else);
+  if (which == "else")
+    return Some(Keyword::Else);
+  return None;
 }
 
 char Tokenizer::peekChar() {
@@ -196,8 +203,8 @@ again:
     if (!isTokenSeparator(peekChar()))
       return error("Invalid token separator after identifier");
 
-    if (isKeyword(ident))
-      return Some(Token::createKeyword(ident.c_str(), location));
+    if (Optional<Keyword> keyword = isKeyword(ident))
+      return Some(Token::createKeyword(*keyword, location));
 
     return Some(Token::createIdent(ident.c_str(), location));
   }
