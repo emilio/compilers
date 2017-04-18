@@ -146,4 +146,13 @@ void ParenthesizedExpression::dump(ASTDumper dumper) const {
   m_inner->dump(dumper);
 }
 
+void ConditionalExpression::dump(ASTDumper dumper) const {
+  dumper << name();
+  if (m_condition)
+    m_condition->dump(dumper);
+  m_innerExpression->dump(dumper);
+  if (m_else)
+    m_else->dump(dumper);
+}
+
 }  // namespace ast

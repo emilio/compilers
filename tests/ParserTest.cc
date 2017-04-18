@@ -39,6 +39,18 @@ TEST(Parser, NestedBlocksStatements) {
   assertParses("{ { 2 + 2 }; {}; foo; { 2 + 3 }; }");
 }
 
+TEST(Parser, IfBasic) {
+  assertParses("if (foo == bar) foo();");
+  assertParses("if (foo == bar) { foo() } else { bar() }");
+  assertParses("if (foo == bar) { foo() } else bar()");
+  // TODO(emilio): This parses r/n as:
+  //
+  //   if (foo == 3) { if (bar == 4) bar(); else foo(); }
+  //
+  // Make it unambiguous.
+  assertParses("if (foo == 3) if (bar == 4) bar() else foo()");
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

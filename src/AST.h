@@ -220,6 +220,36 @@ class ParenthesizedExpression final : public Expression {
   }
 };
 
+class ConditionalExpression final : public Expression {
+  // May be null if it's an `else` clause.
+  std::unique_ptr<Expression> m_condition;
+
+  std::unique_ptr<Expression> m_innerExpression;
+
+  // May be null, if there's no `else` or `else if` branch.
+  std::unique_ptr<ConditionalExpression> m_else;
+
+ public:
+  ConditionalExpression(std::unique_ptr<Expression>&& condition,
+                        std::unique_ptr<Expression>&& inner,
+                        std::unique_ptr<ConditionalExpression>&& elseBranch)
+      : m_condition(std::move(condition))
+      , m_innerExpression(std::move(inner))
+      , m_else(std::move(elseBranch)) {}
+
+  const char* name() const final { return "ConditionalExpression"; }
+  void dump(ASTDumper) const final;
+
+  bool isOfType(NodeType type) const override {
+    return type == NodeType::ConditionalExpression ||
+           Expression::isOfType(type);
+  }
+
+  Value evaluate(ASTEvaluatorContext& ctx) const final {
+    return m_innerExpression->evaluate(ctx);
+  }
+};
+
 #define NODE_TYPE(ty)                                                          \
   inline bool is##ty(const Node& node) { return node.isOfType(NodeType::ty); } \
   inline bool is##ty(const Node* node) { return node && is##ty(*node); }       \

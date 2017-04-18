@@ -53,8 +53,29 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
       return noteParseError("Stray semicolon");
     case TokenType::Keyword: {
       switch (tok->keyword()) {
-        case Keyword::If:
+        case Keyword::If: {
+          Optional<Token> tok = nextToken();
+          if (!tok || tok->type() != TokenType::LeftParen)
+            return noteParseError("Expected left parenthesis after if condition");
+          std::unique_ptr<ast::Expression> condition = parseExpression();
+          if (!condition)
+            return nullptr;
+          tok = nextToken();
+          if (!tok || tok->type() != TokenType::RightParen)
+            return noteParseError("Expected right paren after if condition");
+          std::unique_ptr<ast::Expression> inner = parseExpression();
+          if (!inner)
+            return nullptr;
+          std::unique_ptr<ast::ConditionalExpression> elseBranch =
+            tryParseRemainingConditionalBranches();
+          if (!elseBranch && m_parseError)
+            return nullptr;
+          return std::make_unique<ast::ConditionalExpression>(std::move(condition),
+                                                              std::move(inner),
+                                                              std::move(elseBranch));
+        }
         case Keyword::Else:
+          return noteParseError("extraneous else keyword");
         case Keyword::For:
         case Keyword::While:
           return noteParseError("TODO");
@@ -209,4 +230,54 @@ std::unique_ptr<ast::Expression> Parser::parseProduct() {
     expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),
                                                   std::move(rhs));
   }
+}
+
+std::unique_ptr<ast::ConditionalExpression>
+Parser::tryParseRemainingConditionalBranches() {
+  Optional<Token> tok = nextToken();
+  if (!tok || tok->type() != TokenType::Keyword ||
+      tok->keyword() != Keyword::Else) {
+    m_lastToken = std::move(tok);
+    return nullptr;
+  }
+
+  tok = nextToken();
+  if (!tok) {
+    m_lastToken = std::move(tok);
+    return nullptr;
+  }
+
+  std::unique_ptr<ast::Expression> conditional;
+  if (tok->type() == TokenType::Keyword && tok->keyword() == Keyword::If) {
+    tok = nextToken();
+    if (!tok || tok->type() != TokenType::LeftParen) {
+      noteParseError("Expected parenthesis after if keyword");
+      return nullptr;
+    }
+    conditional = parseExpression();
+    if (!conditional)
+      return nullptr;
+    tok = nextToken();
+    if (!tok || tok->type() != TokenType::RightParen) {
+      noteParseError("Expected parenthesis after if condition");
+      return nullptr;
+    }
+  } else {
+    m_lastToken = std::move(tok);
+  }
+
+  std::unique_ptr<ast::Expression> body = parseExpression();
+  if (!body)
+    return nullptr;
+
+  std::unique_ptr<ast::ConditionalExpression> elseBranch;
+  if (conditional) {
+    elseBranch = tryParseRemainingConditionalBranches();
+    if (!elseBranch && m_parseError)
+      return nullptr;
+  }
+
+  return std::make_unique<ast::ConditionalExpression>(std::move(conditional),
+                                                      std::move(body),
+                                                      std::move(elseBranch));
 }

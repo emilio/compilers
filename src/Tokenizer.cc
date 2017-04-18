@@ -105,7 +105,7 @@ static Optional<Keyword> isKeyword(const std::string& which) {
   if (which == "while")
     return Some(Keyword::While);
   if (which == "if")
-    return Some(Keyword::Else);
+    return Some(Keyword::If);
   if (which == "else")
     return Some(Keyword::Else);
   return None;
