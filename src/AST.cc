@@ -155,4 +155,31 @@ void ConditionalExpression::dump(ASTDumper dumper) const {
     m_else->dump(dumper);
 }
 
+void ForLoop::dump(ASTDumper dumper) const {
+  dumper << name();
+  if (m_init)
+    m_init->dump(dumper);
+  if (m_condition)
+    m_condition->dump(dumper);
+  if (m_afterClause)
+    m_afterClause->dump(dumper);
+  m_body->dump(dumper);
+}
+
+Value ForLoop::evaluate(ASTEvaluatorContext& ctx) const {
+  if (m_init)
+    m_init->evaluate(ctx);
+
+  // FIXME(emilio): Add, at the very least, boolean values.
+  while (!m_condition || m_condition->evaluate(ctx).normalizedValue()) {
+    m_body->evaluate(ctx);
+    if (m_afterClause)
+      m_afterClause->evaluate(ctx);
+  }
+
+  // TODO(emilio): Of course, also dubious.
+  return Value::createInt(0);
+}
+
+
 }  // namespace ast

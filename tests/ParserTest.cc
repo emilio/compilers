@@ -51,6 +51,14 @@ TEST(Parser, IfBasic) {
   assertParses("if (foo == 3) if (bar == 4) bar() else foo()");
 }
 
+TEST(Parser, For) {
+  assertParses("for (;;) {}");
+  assertParses("for (i = 1; i < 10; ++i) {}");
+  assertParses("for (; i < 10;) {}");
+  assertParses("while (i < 10) {}");
+  assertParses("while (rofl()) {}");
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

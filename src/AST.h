@@ -246,7 +246,34 @@ class ConditionalExpression final : public Expression {
   }
 
   Value evaluate(ASTEvaluatorContext& ctx) const final {
+    // FIXME(emilio): This is wrong.
     return m_innerExpression->evaluate(ctx);
+  }
+};
+
+class ForLoop final : public Expression {
+  std::unique_ptr<ast::Expression> m_init;
+  std::unique_ptr<ast::Expression> m_condition;
+  std::unique_ptr<ast::Expression> m_afterClause;
+  std::unique_ptr<ast::Expression> m_body;
+
+ public:
+  ForLoop(std::unique_ptr<ast::Expression>&& init,
+          std::unique_ptr<ast::Expression>&& condition,
+          std::unique_ptr<ast::Expression>&& afterClause,
+          std::unique_ptr<ast::Expression>&& body)
+    : m_init(std::move(init))
+    , m_condition(std::move(condition))
+    , m_afterClause(std::move(afterClause))
+    , m_body(std::move(body)) {}
+
+  const char* name() const final { return "ForLoop"; }
+
+  void dump(ASTDumper) const final;
+  Value evaluate(ASTEvaluatorContext& ctx) const final;
+
+  bool isOfType(NodeType type) const override {
+    return type == NodeType::ForLoop || Expression::isOfType(type);
   }
 };
 

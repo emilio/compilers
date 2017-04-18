@@ -50,6 +50,7 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
 
   switch (tok->type()) {
     case TokenType::SemiColon:
+      // TODO(emilio): C++ allows this, should we?
       return noteParseError("Stray semicolon");
     case TokenType::Keyword: {
       switch (tok->keyword()) {
@@ -76,9 +77,81 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
         }
         case Keyword::Else:
           return noteParseError("extraneous else keyword");
-        case Keyword::For:
-        case Keyword::While:
-          return noteParseError("TODO");
+        case Keyword::For: {
+          Optional<Token> tok = nextToken();
+          if (!tok || tok->type() != TokenType::LeftParen)
+            return noteParseError("Expected left parenthesis after for clause");
+
+          std::unique_ptr<ast::Expression> init;
+
+          tok = nextToken();
+          // Allow empty init clauses.
+          if (!tok || tok->type() != TokenType::SemiColon) {
+            m_lastToken = std::move(tok);
+            init = parseExpression();
+            if (!init)
+              return nullptr;
+
+            tok = nextToken();
+            if (!tok || tok->type() != TokenType::SemiColon)
+              return noteParseError("Expected semicolon after for init clause");
+          }
+
+          std::unique_ptr<ast::Expression> condition;
+          tok = nextToken();
+          if (!tok || tok->type() != TokenType::SemiColon) {
+            m_lastToken = std::move(tok);
+            condition = parseExpression();
+            if (!condition)
+              return nullptr;
+
+            tok = nextToken();
+            if (!tok || tok->type() != TokenType::SemiColon)
+              return noteParseError("Expected semicolon after for condition");
+          }
+
+          tok = nextToken();
+          std::unique_ptr<ast::Expression> afterClause;
+          if (!tok || tok->type() != TokenType::RightParen) {
+            m_lastToken = std::move(tok);
+            afterClause = parseExpression();
+            if (!afterClause)
+              return nullptr;
+
+            tok = nextToken();
+            if (!tok || tok->type() != TokenType::RightParen)
+              return noteParseError("Expected closing paren after for final clause");
+          }
+
+          std::unique_ptr<ast::Expression> body = parseExpression();
+          if (!body)
+            return nullptr;
+          return std::make_unique<ast::ForLoop>(std::move(init),
+                                                std::move(condition),
+                                                std::move(afterClause),
+                                                std::move(body));
+        }
+        case Keyword::While: {
+          Optional<Token> tok = nextToken();
+          if (!tok || tok->type() != TokenType::LeftParen)
+            return noteParseError("Expected left parenthesis after for clause");
+          std::unique_ptr<ast::Expression> condition = parseExpression();
+          if (!condition)
+            return nullptr;
+
+          tok = nextToken();
+          if (!tok || tok->type() != TokenType::RightParen)
+            return noteParseError("Expected left paren after while condition");
+
+          std::unique_ptr<ast::Expression> body = parseExpression();
+          if (!body)
+            return nullptr;
+
+          return std::make_unique<ast::ForLoop>(nullptr,
+                                                std::move(condition),
+                                                nullptr,
+                                                std::move(body));
+        }
       }
       assert(false);
       return noteParseError("Internal error: Unexpected keyword");
