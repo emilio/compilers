@@ -6,7 +6,7 @@
 
 class ExecutionContext {
   std::stack<Value> m_valueStack;
-  bool m_hasPendingError { false };
+  bool m_hasPendingError{false};
 
   ExecutionContext() = default;
 

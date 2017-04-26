@@ -57,7 +57,8 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
         case Keyword::If: {
           Optional<Token> tok = nextToken();
           if (!tok || tok->type() != TokenType::LeftParen)
-            return noteParseError("Expected left parenthesis after if condition");
+            return noteParseError(
+                "Expected left parenthesis after if condition");
           std::unique_ptr<ast::Expression> condition = parseExpression();
           if (!condition)
             return nullptr;
@@ -68,12 +69,11 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
           if (!inner)
             return nullptr;
           std::unique_ptr<ast::ConditionalExpression> elseBranch =
-            tryParseRemainingConditionalBranches();
+              tryParseRemainingConditionalBranches();
           if (!elseBranch && m_parseError)
             return nullptr;
-          return std::make_unique<ast::ConditionalExpression>(std::move(condition),
-                                                              std::move(inner),
-                                                              std::move(elseBranch));
+          return std::make_unique<ast::ConditionalExpression>(
+              std::move(condition), std::move(inner), std::move(elseBranch));
         }
         case Keyword::Else:
           return noteParseError("extraneous else keyword");
@@ -120,16 +120,16 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
 
             tok = nextToken();
             if (!tok || tok->type() != TokenType::RightParen)
-              return noteParseError("Expected closing paren after for final clause");
+              return noteParseError(
+                  "Expected closing paren after for final clause");
           }
 
           std::unique_ptr<ast::Expression> body = parseExpression();
           if (!body)
             return nullptr;
-          return std::make_unique<ast::ForLoop>(std::move(init),
-                                                std::move(condition),
-                                                std::move(afterClause),
-                                                std::move(body));
+          return std::make_unique<ast::ForLoop>(
+              std::move(init), std::move(condition), std::move(afterClause),
+              std::move(body));
         }
         case Keyword::While: {
           Optional<Token> tok = nextToken();
@@ -147,10 +147,8 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
           if (!body)
             return nullptr;
 
-          return std::make_unique<ast::ForLoop>(nullptr,
-                                                std::move(condition),
-                                                nullptr,
-                                                std::move(body));
+          return std::make_unique<ast::ForLoop>(nullptr, std::move(condition),
+                                                nullptr, std::move(body));
         }
       }
       assert(false);
@@ -350,7 +348,6 @@ Parser::tryParseRemainingConditionalBranches() {
       return nullptr;
   }
 
-  return std::make_unique<ast::ConditionalExpression>(std::move(conditional),
-                                                      std::move(body),
-                                                      std::move(elseBranch));
+  return std::make_unique<ast::ConditionalExpression>(
+      std::move(conditional), std::move(body), std::move(elseBranch));
 }

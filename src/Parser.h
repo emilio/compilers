@@ -47,7 +47,8 @@ class Parser {
 
   std::unique_ptr<ast::Expression> parseOneExpression();
   std::unique_ptr<ast::Expression> parseExpression();
-  std::unique_ptr<ast::ConditionalExpression> tryParseRemainingConditionalBranches();
+  std::unique_ptr<ast::ConditionalExpression>
+  tryParseRemainingConditionalBranches();
 
   std::unique_ptr<ast::Expression> parseProduct();
 

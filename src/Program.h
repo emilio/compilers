@@ -9,15 +9,14 @@ class Environment;
 class ExecutionContext;
 
 namespace ast {
-  class Node;
+class Node;
 }
 
 class ProgramCreationError {
   std::string m_message;
 
  public:
-  ProgramCreationError(std::string&& message)
-    : m_message(std::move(message)) {}
+  ProgramCreationError(std::string&& message) : m_message(std::move(message)) {}
 
   const std::string& message() const { return m_message; }
 };
@@ -30,14 +29,13 @@ class Program {
   /**
    * TODO(emilio): Need to figure out a nice interface for external functions.
    */
-  static Result<std::unique_ptr<Program>, ProgramCreationError>
-  fromAST(const ast::Node&);
+  static Result<std::unique_ptr<Program>, ProgramCreationError> fromAST(
+      const ast::Node&);
 
   bool execute(ExecutionContext& ctx);
 
  private:
-  Program(std::vector<Bytecode>&& bytecode)
-    : m_bytecode(std::move(bytecode)) {}
+  Program(std::vector<Bytecode>&& bytecode) : m_bytecode(std::move(bytecode)) {}
 
   std::vector<Bytecode> m_bytecode;
 

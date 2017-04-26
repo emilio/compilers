@@ -20,9 +20,9 @@
 #include "AST.h"
 #include "ExecutionContext.h"
 #include "FileReader.h"
-#include "Tokenizer.h"
 #include "Parser.h"
 #include "Program.h"
+#include "Tokenizer.h"
 
 int main(int argc, const char** argv) {
   if (argc < 2) {

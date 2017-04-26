@@ -77,13 +77,11 @@ class Bytecode final {
   } m_inner;
 
  public:
-  explicit Bytecode(Value val)
-    : m_kind(BytecodeKind::Value) {
+  explicit Bytecode(Value val) : m_kind(BytecodeKind::Value) {
     m_inner.m_value = std::move(val);
   }
 
-  explicit Bytecode(Instruction ins)
-    : m_kind(BytecodeKind::Instruction) {
+  explicit Bytecode(Instruction ins) : m_kind(BytecodeKind::Instruction) {
     m_inner.m_instruction = ins;
   }
 

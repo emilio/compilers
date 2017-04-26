@@ -16,8 +16,8 @@
  */
 
 #include "AST.h"
-#include "BytecodeCollector.h"
 #include <cmath>
+#include "BytecodeCollector.h"
 
 namespace ast {
 
@@ -84,14 +84,14 @@ void ForLoop::dump(ASTDumper dumper) const {
   m_body->dump(dumper);
 }
 
-BytecodeCollectionResult
-ConstantExpression::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult ConstantExpression::toByteCode(
+    BytecodeCollector& collector) const {
   collector.pushToStack(m_value);
   return BytecodeCollectionStatus::PushedToStack;
 }
 
-BytecodeCollectionResult
-UnaryOperation::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult UnaryOperation::toByteCode(
+    BytecodeCollector& collector) const {
   assert(m_op == Operator::Plus || m_op == Operator::Minus);
 
   BytecodeCollectionStatus status;
@@ -110,8 +110,8 @@ UnaryOperation::toByteCode(BytecodeCollector& collector) const {
   return BytecodeCollectionStatus::PushedToStack;
 }
 
-BytecodeCollectionResult
-Statement::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult Statement::toByteCode(
+    BytecodeCollector& collector) const {
   BytecodeCollectionStatus status;
   TRY_VAR(status, m_inner->toByteCode(collector));
   if (status == BytecodeCollectionStatus::PushedToStack)
@@ -119,8 +119,7 @@ Statement::toByteCode(BytecodeCollector& collector) const {
   return BytecodeCollectionStatus::DidntPush;
 }
 
-BytecodeCollectionResult
-Block::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult Block::toByteCode(BytecodeCollector& collector) const {
   BytecodeCollectionStatus status;
   for (const auto& statement : m_statements) {
     TRY_VAR(status, statement->toByteCode(collector));
@@ -132,21 +131,23 @@ Block::toByteCode(BytecodeCollector& collector) const {
   return BytecodeCollectionStatus::DidntPush;
 }
 
-BytecodeCollectionResult
-BinaryOperation::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult BinaryOperation::toByteCode(
+    BytecodeCollector& collector) const {
   BytecodeCollectionStatus status;
   TRY_VAR(status, m_lhs->toByteCode(collector));
   if (status != BytecodeCollectionStatus::PushedToStack)
-    return std::string("Expected lhs of expression to leave a value in the stack");
+    return std::string(
+        "Expected lhs of expression to leave a value in the stack");
   TRY_VAR(status, m_rhs->toByteCode(collector));
   if (status != BytecodeCollectionStatus::PushedToStack)
-    return std::string("Expected lhs of expression to leave a value in the stack");
+    return std::string(
+        "Expected lhs of expression to leave a value in the stack");
   collector.binOp(m_op);
   return BytecodeCollectionStatus::PushedToStack;
 }
 
-BytecodeCollectionResult
-ParenthesizedExpression::toByteCode(BytecodeCollector& collector) const {
+BytecodeCollectionResult ParenthesizedExpression::toByteCode(
+    BytecodeCollector& collector) const {
   return m_inner->toByteCode(collector);
 }
 

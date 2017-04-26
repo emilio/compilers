@@ -1,9 +1,9 @@
-#include "BytecodeCollector.h"
 #include "Program.h"
 #include "AST.h"
+#include "BytecodeCollector.h"
 
-Result<std::unique_ptr<Program>, ProgramCreationError>
-Program::fromAST(const ast::Node& ast) {
+Result<std::unique_ptr<Program>, ProgramCreationError> Program::fromAST(
+    const ast::Node& ast) {
   BytecodeCollector collector;
   ast::BytecodeCollectionResult result = ast.toByteCode(collector);
   if (!result)

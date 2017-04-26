@@ -30,9 +30,7 @@ enum class ValueType : uint8_t {
 
 class Value {
  public:
-  static Value unit() {
-    return Value(ValueType::Unit);
-  }
+  static Value unit() { return Value(ValueType::Unit); }
 
   static Value createInt(int64_t integer) {
     Value ret(ValueType::Integer);
@@ -70,8 +68,9 @@ class Value {
   }
 
   ~Value() = default;
+
  private:
-  explicit Value(ValueType type) : m_type(type) {};
+  explicit Value(ValueType type) : m_type(type){};
 
   ValueType m_type;
   union {

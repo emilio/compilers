@@ -9,7 +9,7 @@ endif()
 # In order to use YouCompleteMe with Vim.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -pedantic -g -Werror" )
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -pedantic -g -Werror -Wno-gnu-statement-expression" )
 
 # Download and unpack gtest at configure time
 configure_file(cmake/GTest.txt.in gtest-download/CMakeLists.txt)
@@ -36,6 +36,7 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 add_library(base OBJECT
   src/AST.cc
   src/Parser.cc
+  src/Executor.cc
   src/Tokenizer.cc
   src/Value.cc
   src/Bytecode.cc
@@ -76,4 +77,19 @@ add_custom_target(format COMMAND
   find ${CMAKE_SOURCE_DIR}/src -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;" &&
   find ${CMAKE_SOURCE_DIR}/tests -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;" &&
   find ${CMAKE_SOURCE_DIR}/bin -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-format -i {} "\;"
+)
+
+add_custom_target(tidy COMMAND
+  find ${CMAKE_SOURCE_DIR}/src -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-tidy -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/tests -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-tidy -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/bin -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-tidy -p ${CMAKE_BINARY_DIR} {} "\;"
+)
+
+add_custom_target(fix-includes COMMAND
+  find ${CMAKE_SOURCE_DIR}/src -regex "'.*\\.\\(cc\\|h\\)'" -exec find-all-symbols -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/tests -regex "'.*\\.\\(cc\\|h\\)'" -exec find-all-symbols -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/bin -regex "'.*\\.\\(cc\\|h\\)'" -exec find-all-symbols -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/src -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-include-fixer -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/tests -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-include-fixer -p ${CMAKE_BINARY_DIR} {} "\;" &&
+  find ${CMAKE_SOURCE_DIR}/bin -regex "'.*\\.\\(cc\\|h\\)'" -exec clang-include-fixer -p ${CMAKE_BINARY_DIR} {} "\;"
 )

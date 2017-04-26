@@ -230,9 +230,9 @@ class ConditionalExpression final : public Expression {
   ConditionalExpression(std::unique_ptr<Expression>&& condition,
                         std::unique_ptr<Expression>&& inner,
                         std::unique_ptr<ConditionalExpression>&& elseBranch)
-      : m_condition(std::move(condition))
-      , m_innerExpression(std::move(inner))
-      , m_else(std::move(elseBranch)) {}
+      : m_condition(std::move(condition)),
+        m_innerExpression(std::move(inner)),
+        m_else(std::move(elseBranch)) {}
 
   const char* name() const final { return "ConditionalExpression"; }
   void dump(ASTDumper) const final;
@@ -254,10 +254,10 @@ class ForLoop final : public Expression {
           std::unique_ptr<ast::Expression>&& condition,
           std::unique_ptr<ast::Expression>&& afterClause,
           std::unique_ptr<ast::Expression>&& body)
-    : m_init(std::move(init))
-    , m_condition(std::move(condition))
-    , m_afterClause(std::move(afterClause))
-    , m_body(std::move(body)) {}
+      : m_init(std::move(init)),
+        m_condition(std::move(condition)),
+        m_afterClause(std::move(afterClause)),
+        m_body(std::move(body)) {}
 
   const char* name() const final { return "ForLoop"; }
 
