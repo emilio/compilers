@@ -16,7 +16,6 @@
  */
 
 #include "AST.h"
-#include "ASTEvaluator.h"
 #include "BytecodeCollector.h"
 #include <cmath>
 

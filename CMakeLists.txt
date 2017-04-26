@@ -35,7 +35,6 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 
 add_library(base OBJECT
   src/AST.cc
-  src/ASTEvaluator.cc
   src/Parser.cc
   src/Tokenizer.cc
   src/Value.cc
@@ -64,7 +63,6 @@ endforeach()
 set(EXECUTABLES
   Tokenizer
   Dumper
-  Evaluator
   RunProgram
 )
 
