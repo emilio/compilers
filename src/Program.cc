@@ -7,8 +7,7 @@ class ProgramExecutionState {
  public:
   ProgramExecutionState(const std::vector<Bytecode>& bytecode,
                         ExecutionContext& ctx)
-    : m_bytecode(bytecode)
-    , m_ctx(ctx) {
+      : m_bytecode(bytecode), m_ctx(ctx) {
     assert(!m_bytecode.empty());
   }
 
@@ -20,9 +19,7 @@ class ProgramExecutionState {
     return m_bytecode[final_offset];
   }
 
-  bool done() const {
-    return m_pc >= m_bytecode.size();
-  }
+  bool done() const { return m_pc >= m_bytecode.size(); }
 
   void jmp(ssize_t offset) {
     if (offset < 0) {
@@ -31,9 +28,7 @@ class ProgramExecutionState {
     m_pc += offset;
   }
 
-  void advance(size_t offset) {
-    jmp(offset);
-  }
+  void advance(size_t offset) { jmp(offset); }
 
   const Bytecode& curr() const { return at(0); }
 
@@ -51,7 +46,7 @@ class ProgramExecutionState {
  private:
   const std::vector<Bytecode>& m_bytecode;
   ExecutionContext& m_ctx;
-  size_t m_pc { 0 };
+  size_t m_pc{0};
 };
 
 Result<std::unique_ptr<Program>, ProgramCreationError> Program::fromAST(
@@ -94,30 +89,43 @@ bool ProgramExecutionState::execute() {
   return true;
 }
 
-static Value addValues(const Value& l, const Value& r) {
-  assert(r.type() == l.type());
-
-  switch (l.type()) {
-    case ValueType::Integer:
-      return Value::createInt(l.intValue() + r.intValue());
-    case ValueType::Float:
-      return Value::createDouble(l.doubleValue() + r.doubleValue());
-    case ValueType::Bool:
-      bool val = l.boolValue() || r.boolValue();
-      return Value::createBool(val);
+#define IMPL_OP(name_, op_, boolop_)                                     \
+  static Value name_##Values(const Value& l, const Value& r) {           \
+    assert(r.type() == l.type());                                        \
+                                                                         \
+    switch (l.type()) {                                                  \
+      case ValueType::Integer:                                           \
+        return Value::createInt(l.intValue() op_ r.intValue());          \
+      case ValueType::Float:                                             \
+        return Value::createDouble(l.doubleValue() op_ r.doubleValue()); \
+      case ValueType::Bool:                                              \
+        bool val = l.boolValue() boolop_ r.boolValue();                  \
+        return Value::createBool(val);                                   \
+    }                                                                    \
+    __builtin_unreachable();                                             \
   }
 
-  __builtin_unreachable();
-}
+IMPL_OP(add, +, ||)
+IMPL_OP(subract, -, -)
 
 bool ProgramExecutionState::executeInstruction(Instruction ins) {
   switch (ins) {
+    case Instruction::Subtract:
     case Instruction::Add: {
       auto l = m_ctx.pop();
       auto r = m_ctx.pop();
       if (r.type() != l.type())
         return error("Mismatched types in add");
-      m_ctx.push(addValues(l, r));
+      switch (ins) {
+        case Instruction::Subtract:
+          m_ctx.push(subractValues(l, r));
+          break;
+        case Instruction::Add:
+          m_ctx.push(addValues(l, r));
+          break;
+        default:
+          __builtin_unreachable();
+      }
       advance(1);
       return true;
     }
@@ -125,6 +133,11 @@ bool ProgramExecutionState::executeInstruction(Instruction ins) {
       Value val = expectValueAt(1);
       m_ctx.push(std::move(val));
       advance(2);
+      return true;
+    }
+    case Instruction::Pop: {
+      m_ctx.pop();
+      advance(1);
       return true;
     }
     default:
