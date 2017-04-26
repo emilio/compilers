@@ -22,8 +22,11 @@
 #include <vector>
 
 #include "ASTDumper.h"
+#include "Result.h"
 #include "Tokenizer.h"
 #include "Value.h"
+
+class BytecodeCollector;
 
 namespace ast {
 
@@ -35,12 +38,26 @@ enum class NodeType {
 
 class ASTEvaluatorContext;
 
+/**
+ * Returns whether the given bytecode collection resulted in a new value being
+ * at the top of the stack.
+ */
+enum class BytecodeCollectionStatus {
+  PushedToStack,
+  DidntPush,
+};
+
+using BytecodeCollectionResult = Result<BytecodeCollectionStatus, std::string>;
+
 class Node {
  public:
   virtual bool isOfType(NodeType) const = 0;
   virtual const char* name() const = 0;
   virtual void dump(ASTDumper) const = 0;
   virtual ~Node() = default;
+  virtual BytecodeCollectionResult toByteCode(BytecodeCollector&) const {
+    return std::string("Bytecode generation not implemented yet for ") + name();
+  }
 };
 
 class Expression : public Node {
@@ -48,8 +65,6 @@ class Expression : public Node {
   bool isOfType(NodeType type) const override {
     return type == NodeType::Expression;
   }
-
-  virtual Value evaluate(ASTEvaluatorContext&) const = 0;
 };
 
 class VariableBinding final : public Expression {
@@ -60,13 +75,13 @@ class VariableBinding final : public Expression {
 
   const char* name() const final { return "VariableBinding"; }
 
+  const std::string& varName() const { return m_name; }
+
   void dump(ASTDumper) const final;
 
   bool isOfType(NodeType type) const final {
     return type == NodeType::VariableBinding || Expression::isOfType(type);
   }
-
-  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class ConstantExpression final : public Expression {
@@ -82,7 +97,7 @@ class ConstantExpression final : public Expression {
     return type == NodeType::ConstantExpression || Expression::isOfType(type);
   }
 
-  Value evaluate(ASTEvaluatorContext&) const final { return m_value; }
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 class UnaryOperation final : public Expression {
@@ -100,7 +115,7 @@ class UnaryOperation final : public Expression {
     return type == NodeType::UnaryOperation || Expression::isOfType(type);
   }
 
-  Value evaluate(ASTEvaluatorContext&) const final;
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 // A statement is an expression terminated by a semicolon.
@@ -122,13 +137,7 @@ class Statement final : public Expression {
 
   void dump(ASTDumper) const final;
 
-  Value evaluate(ASTEvaluatorContext& ctx) const final {
-    m_inner->evaluate(ctx);
-
-    // TODO(emilio): We shouldn't be returning any value from here, should we?
-    // This is hacky, at best.
-    return Value::createInt(0);
-  }
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 // A block is a list of statements, with a final expression, potentially.
@@ -149,15 +158,7 @@ class Block final : public Expression {
 
   void dump(ASTDumper) const final;
 
-  Value evaluate(ASTEvaluatorContext& ctx) const final {
-    for (auto& statement : m_statements)
-      statement->evaluate(ctx);
-
-    // TODO(emilio): We shouldn't be returning any value from here if there's no
-    // last expression, should we?
-    return m_lastExpression ? m_lastExpression->evaluate(ctx)
-                            : Value::createInt(0);
-  }
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 class BinaryOperation final : public Expression {
@@ -178,7 +179,7 @@ class BinaryOperation final : public Expression {
     return type == NodeType::BinaryOperation || Expression::isOfType(type);
   }
 
-  Value evaluate(ASTEvaluatorContext&) const final;
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 class FunctionCall final : public Expression {
@@ -196,8 +197,6 @@ class FunctionCall final : public Expression {
   bool isOfType(NodeType type) const override {
     return type == NodeType::FunctionCall || Expression::isOfType(type);
   }
-
-  Value evaluate(ASTEvaluatorContext&) const final;
 };
 
 class ParenthesizedExpression final : public Expression {
@@ -215,9 +214,7 @@ class ParenthesizedExpression final : public Expression {
            Expression::isOfType(type);
   }
 
-  Value evaluate(ASTEvaluatorContext& ctx) const final {
-    return m_inner->evaluate(ctx);
-  }
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 class ConditionalExpression final : public Expression {
@@ -244,11 +241,6 @@ class ConditionalExpression final : public Expression {
     return type == NodeType::ConditionalExpression ||
            Expression::isOfType(type);
   }
-
-  Value evaluate(ASTEvaluatorContext& ctx) const final {
-    // FIXME(emilio): This is wrong.
-    return m_innerExpression->evaluate(ctx);
-  }
 };
 
 class ForLoop final : public Expression {
@@ -270,7 +262,6 @@ class ForLoop final : public Expression {
   const char* name() const final { return "ForLoop"; }
 
   void dump(ASTDumper) const final;
-  Value evaluate(ASTEvaluatorContext& ctx) const final;
 
   bool isOfType(NodeType type) const override {
     return type == NodeType::ForLoop || Expression::isOfType(type);

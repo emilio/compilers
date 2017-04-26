@@ -33,8 +33,9 @@ int main(int, const char**) {
   if (ast::Node* node = parser.parse()) {
     if (isExpression(node)) {
       ast::ASTEvaluatorContext ctx;
-      Value val = toExpression(node)->evaluate(ctx);
-      std::cout << val.normalizedValue() << std::endl;
+      // Value val = toExpression(node)->evaluate(ctx);
+      Value val = Value::unit();
+      std::cout << val << std::endl;
     }
   } else if (const ParseError* error = parser.error()) {
     std::cout << "parse error @ " << error->location() << ": "

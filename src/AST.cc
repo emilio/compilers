@@ -16,8 +16,9 @@
  */
 
 #include "AST.h"
-#include <cmath>
 #include "ASTEvaluator.h"
+#include "BytecodeCollector.h"
+#include <cmath>
 
 namespace ast {
 
@@ -29,69 +30,10 @@ void VariableBinding::dump(ASTDumper dumper) const {
   dumper << name() << " " << m_name;
 }
 
-Value VariableBinding::evaluate(ASTEvaluatorContext& ctx) const {
-  Optional<Value> val = ctx.resolveVariableBinding(m_name);
-  // TODO(emilio): Need to do proper error handling!
-  if (!val)
-    return Value::createInt(0);
-  return *val;
-}
-
-Value BinaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
-  Value left = m_lhs->evaluate(ctx);
-  Value right = m_rhs->evaluate(ctx);
-
-#define IMPL_BIN_OP(operator_, op)                                             \
-  if (m_op == Operator::operator_) {                                           \
-    if (left.type() != right.type())                                           \
-      return Value::createDouble(left.normalizedValue()                        \
-                                     op right.normalizedValue());              \
-    switch (left.type()) {                                                     \
-      case ValueType::Integer:                                                 \
-        return Value::createInt(left.intValue() op right.intValue());          \
-      case ValueType::Float:                                                   \
-        return Value::createDouble(left.doubleValue() op right.doubleValue()); \
-      case ValueType::Bool:                                                    \
-        return Value::createDouble(left.boolValue() op right.boolValue());     \
-    }                                                                          \
-  }
-
-  IMPL_BIN_OP(Plus, +)  // Nasty
-  IMPL_BIN_OP(Minus, -)
-  IMPL_BIN_OP(Star, *)
-  IMPL_BIN_OP(Slash, /)
-
-#undef IMPL_BIN_OP
-
-  assert(false);  // Again, easily reachable, need to implement other operators.
-  return Value::createInt(0);
-}
-
 void BinaryOperation::dump(ASTDumper dumper) const {
   dumper << name() << "(" << m_op << ")";
   m_lhs->dump(dumper);
   m_rhs->dump(dumper);
-}
-
-Value UnaryOperation::evaluate(ASTEvaluatorContext& ctx) const {
-  Value inner = m_rhs->evaluate(ctx);
-
-  switch (m_op) {
-    case Operator::Plus:
-      return inner;
-    case Operator::Minus:
-      switch (inner.type()) {
-        case ValueType::Integer:
-          return Value::createInt(-inner.intValue());
-        case ValueType::Float:
-          return Value::createDouble(-inner.doubleValue());
-        case ValueType::Bool:
-          return inner;
-      }
-    default:
-      assert(false && "Invalid unary operator!");
-      return Value::createInt(0);
-  }
 }
 
 void UnaryOperation::dump(ASTDumper dumper) const {
@@ -110,29 +52,6 @@ void Block::dump(ASTDumper dumper) const {
     statement->dump(dumper);
   if (m_lastExpression)
     m_lastExpression->dump(dumper);
-}
-
-Value FunctionCall::evaluate(ASTEvaluatorContext& ctx) const {
-#define IMPL_ONE_ARG_FN(fn_name, matching_fn)                     \
-  if (m_name == #fn_name && m_arguments.size() == 1) {            \
-    double val = m_arguments[0]->evaluate(ctx).normalizedValue(); \
-    return Value::createDouble(matching_fn(val));                 \
-  }
-
-  IMPL_ONE_ARG_FN(sin, sin);
-  IMPL_ONE_ARG_FN(cos, cos);
-  IMPL_ONE_ARG_FN(abs, fabs);
-  IMPL_ONE_ARG_FN(sqr, sqrt);
-
-  // Just to test sqr easily.
-  if (m_name == "pow" && m_arguments.size() == 2) {
-    double val = m_arguments[0]->evaluate(ctx).normalizedValue();
-    double exp = m_arguments[1]->evaluate(ctx).normalizedValue();
-    return Value::createDouble(pow(val, exp));
-  }
-
-  assert(false);  // TODO(emilio): This is actually pretty reachable.
-  return Value::createDouble(0.0);
 }
 
 void FunctionCall::dump(ASTDumper dumper) const {
@@ -166,20 +85,70 @@ void ForLoop::dump(ASTDumper dumper) const {
   m_body->dump(dumper);
 }
 
-Value ForLoop::evaluate(ASTEvaluatorContext& ctx) const {
-  if (m_init)
-    m_init->evaluate(ctx);
-
-  // FIXME(emilio): Add, at the very least, boolean values.
-  while (!m_condition || m_condition->evaluate(ctx).normalizedValue()) {
-    m_body->evaluate(ctx);
-    if (m_afterClause)
-      m_afterClause->evaluate(ctx);
-  }
-
-  // TODO(emilio): Of course, also dubious.
-  return Value::createInt(0);
+BytecodeCollectionResult
+ConstantExpression::toByteCode(BytecodeCollector& collector) const {
+  collector.pushToStack(m_value);
+  return BytecodeCollectionStatus::PushedToStack;
 }
 
+BytecodeCollectionResult
+UnaryOperation::toByteCode(BytecodeCollector& collector) const {
+  assert(m_op == Operator::Plus || m_op == Operator::Minus);
+
+  BytecodeCollectionStatus status;
+  if (m_op == Operator::Minus) {
+    collector.pushToStack(Value::createDouble(0.));
+    TRY_VAR(status, m_rhs->toByteCode(collector));
+    if (status != BytecodeCollectionStatus::PushedToStack)
+      return std::string("Expected an expression with a value");
+    collector.binOp(m_op);
+    return BytecodeCollectionStatus::PushedToStack;
+  }
+
+  TRY_VAR(status, m_rhs->toByteCode(collector));
+  if (status != BytecodeCollectionStatus::PushedToStack)
+    return std::string("Expected an expression with a value");
+  return BytecodeCollectionStatus::PushedToStack;
+}
+
+BytecodeCollectionResult
+Statement::toByteCode(BytecodeCollector& collector) const {
+  BytecodeCollectionStatus status;
+  TRY_VAR(status, m_inner->toByteCode(collector));
+  if (status == BytecodeCollectionStatus::PushedToStack)
+    collector.popFromStack();
+  return BytecodeCollectionStatus::DidntPush;
+}
+
+BytecodeCollectionResult
+Block::toByteCode(BytecodeCollector& collector) const {
+  BytecodeCollectionStatus status;
+  for (const auto& statement : m_statements) {
+    TRY_VAR(status, statement->toByteCode(collector));
+    assert(status == BytecodeCollectionStatus::DidntPush);
+  }
+
+  if (m_lastExpression)
+    return m_lastExpression->toByteCode(collector);
+  return BytecodeCollectionStatus::DidntPush;
+}
+
+BytecodeCollectionResult
+BinaryOperation::toByteCode(BytecodeCollector& collector) const {
+  BytecodeCollectionStatus status;
+  TRY_VAR(status, m_lhs->toByteCode(collector));
+  if (status != BytecodeCollectionStatus::PushedToStack)
+    return std::string("Expected lhs of expression to leave a value in the stack");
+  TRY_VAR(status, m_rhs->toByteCode(collector));
+  if (status != BytecodeCollectionStatus::PushedToStack)
+    return std::string("Expected lhs of expression to leave a value in the stack");
+  collector.binOp(m_op);
+  return BytecodeCollectionStatus::PushedToStack;
+}
+
+BytecodeCollectionResult
+ParenthesizedExpression::toByteCode(BytecodeCollector& collector) const {
+  return m_inner->toByteCode(collector);
+}
 
 }  // namespace ast

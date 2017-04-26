@@ -19,6 +19,8 @@
 
 std::ostream& operator<<(std::ostream& os, const ValueType& type) {
   switch (type) {
+    case ValueType::Unit:
+      return os << "Unit";
     case ValueType::Float:
       return os << "Float";
     case ValueType::Integer:
@@ -31,6 +33,20 @@ std::ostream& operator<<(std::ostream& os, const ValueType& type) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Value& value) {
-  return os << "Value(" << value.type() << ", " << value.normalizedValue()
-            << ")";
+  os << "Value(" << value.type();
+  switch (value.type()) {
+    case ValueType::Unit:
+      break;
+    case ValueType::Integer:
+      os << ", " << value.intValue();
+      break;
+    case ValueType::Float:
+      os << ", " << value.doubleValue();
+      break;
+    case ValueType::Bool:
+      os << ", " << value.boolValue();
+      break;
+  }
+
+  return os << ")";
 }

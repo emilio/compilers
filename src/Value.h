@@ -25,10 +25,15 @@ enum class ValueType : uint8_t {
   Integer,
   Float,
   Bool,
+  Unit,
 };
 
 class Value {
  public:
+  static Value unit() {
+    return Value(ValueType::Unit);
+  }
+
   static Value createInt(int64_t integer) {
     Value ret(ValueType::Integer);
     ret.m_integer = integer;
@@ -64,21 +69,9 @@ class Value {
     return m_double;
   }
 
-  double normalizedValue() const {
-    switch (type()) {
-      case ValueType::Float:
-        return doubleValue();
-      case ValueType::Integer:
-        return intValue();
-      case ValueType::Bool:
-        return boolValue();
-    }
-    assert(false);
-    return 0.0;
-  }
-
+  ~Value() = default;
  private:
-  explicit Value(ValueType type) : m_type(type){};
+  explicit Value(ValueType type) : m_type(type) {};
 
   ValueType m_type;
   union {

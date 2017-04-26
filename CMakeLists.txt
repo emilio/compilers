@@ -39,6 +39,9 @@ add_library(base OBJECT
   src/Parser.cc
   src/Tokenizer.cc
   src/Value.cc
+  src/Bytecode.cc
+  src/BytecodeCollector.cc
+  src/Program.cc
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -62,6 +65,7 @@ set(EXECUTABLES
   Tokenizer
   Dumper
   Evaluator
+  RunProgram
 )
 
 foreach(exec ${EXECUTABLES})
