@@ -19,8 +19,6 @@
 
 std::ostream& operator<<(std::ostream& os, const ValueType& type) {
   switch (type) {
-    case ValueType::Unit:
-      return os << "Unit";
     case ValueType::Float:
       return os << "Float";
     case ValueType::Integer:
@@ -35,8 +33,6 @@ std::ostream& operator<<(std::ostream& os, const ValueType& type) {
 std::ostream& operator<<(std::ostream& os, const Value& value) {
   os << "Value(" << value.type();
   switch (value.type()) {
-    case ValueType::Unit:
-      break;
     case ValueType::Integer:
       os << ", " << value.intValue();
       break;

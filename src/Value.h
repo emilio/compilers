@@ -25,13 +25,10 @@ enum class ValueType : uint8_t {
   Integer,
   Float,
   Bool,
-  Unit,
 };
 
 class Value {
  public:
-  static Value unit() { return Value(ValueType::Unit); }
-
   static Value createInt(int64_t integer) {
     Value ret(ValueType::Integer);
     ret.m_integer = integer;
