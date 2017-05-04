@@ -3,10 +3,12 @@
 #include <memory>
 #include <stack>
 #include <string>
+#include <unordered_map>
 #include "Bytecode.h"
 
 class ExecutionContext {
   std::stack<Value> m_valueStack;
+  std::unordered_map<LabelId, Value> m_variables;
   bool m_hasPendingError{false};
   std::string m_errorMsg;
 
@@ -25,7 +27,7 @@ class ExecutionContext {
     assert(!m_hasPendingError);
     const Value ret = m_valueStack.top();
     m_valueStack.pop();
-    return std::move(ret);
+    return ret;
   }
 
   void push(Value&& val) {
@@ -47,4 +49,8 @@ class ExecutionContext {
     m_errorMsg = msg;
     m_hasPendingError = true;
   }
+
+  void clearVariable(LabelId);
+  void setVariable(LabelId, Value);
+  Value getVariable(LabelId);
 };

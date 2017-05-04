@@ -120,20 +120,38 @@ BytecodeCollectionResult Statement::toByteCode(
 }
 
 BytecodeCollectionResult Block::toByteCode(BytecodeCollector& collector) const {
-  BytecodeCollectionStatus status;
+  BytecodeCollectionStatus status = BytecodeCollectionStatus::DidntPush;
+  collector.pushScope();
+
   for (const auto& statement : m_statements) {
     TRY_VAR(status, statement->toByteCode(collector));
     assert(status == BytecodeCollectionStatus::DidntPush);
   }
 
   if (m_lastExpression)
-    return m_lastExpression->toByteCode(collector);
-  return BytecodeCollectionStatus::DidntPush;
+    TRY_VAR(status, m_lastExpression->toByteCode(collector));
+
+  collector.popScope();
+  return status;
 }
 
 BytecodeCollectionResult BinaryOperation::toByteCode(
     BytecodeCollector& collector) const {
   BytecodeCollectionStatus status;
+
+  if (m_op == Operator::Equals) {
+    if (!isVariableBinding(*m_lhs))
+      return std::string("Assigned to something that was not a variable");
+    const VariableBinding& var = toVariableBinding(*m_lhs);
+    LabelId id = collector.reserveVariableIdFor(var.varName());
+    TRY_VAR(status, m_rhs->toByteCode(collector));
+    if (status != BytecodeCollectionStatus::PushedToStack)
+      return std::string("Expected rhs of expression to leave a value "
+                         "in the stack");
+    collector.pushAssignTo(id);
+    return BytecodeCollectionStatus::PushedToStack;
+  }
+
   TRY_VAR(status, m_lhs->toByteCode(collector));
   if (status != BytecodeCollectionStatus::PushedToStack)
     return std::string(
@@ -143,6 +161,15 @@ BytecodeCollectionResult BinaryOperation::toByteCode(
     return std::string(
         "Expected lhs of expression to leave a value in the stack");
   collector.binOp(m_op);
+  return BytecodeCollectionStatus::PushedToStack;
+}
+
+BytecodeCollectionResult VariableBinding::toByteCode(
+    BytecodeCollector& collector) const {
+  Optional<LabelId> id = collector.resolveVariable(varName());
+  if (!id)
+    return std::string("Unresolved variable: ") + varName();
+  collector.pushLoadVar(*id);
   return BytecodeCollectionStatus::PushedToStack;
 }
 

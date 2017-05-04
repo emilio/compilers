@@ -2,6 +2,7 @@
 #include "AST.h"
 #include "BytecodeCollector.h"
 #include "ExecutionContext.h"
+#include <iostream>
 
 class ProgramExecutionState {
  public:
@@ -36,6 +37,12 @@ class ProgramExecutionState {
     const auto& bc = at(offset);
     assert(bc.kind() == BytecodeKind::Value);
     return bc.value();
+  }
+
+  const LabelId expectLabelAt(ssize_t offset) const {
+    const auto& bc = at(offset);
+    assert(bc.kind() == BytecodeKind::LabelId);
+    return bc.labelId();
   }
 
   bool error(const std::string& msg) {
@@ -75,6 +82,7 @@ bool ProgramExecutionState::execute() {
     const Bytecode& current = curr();
     switch (current.kind()) {
       case BytecodeKind::Value:
+      case BytecodeKind::Offset:
       case BytecodeKind::LabelId:
       case BytecodeKind::ExternalFunctionId:
         assert(false &&
@@ -140,7 +148,29 @@ bool ProgramExecutionState::executeInstruction(Instruction ins) {
       advance(1);
       return true;
     }
+    case Instruction::StoreVar: {
+      assert(m_ctx.stackTop());
+      Value val = *m_ctx.stackTop();
+      LabelId id = expectLabelAt(1);
+      m_ctx.setVariable(id, val);
+      advance(2);
+      return true;
+    }
+    case Instruction::ClearVar: {
+      LabelId id = expectLabelAt(1);
+      m_ctx.clearVariable(id);
+      advance(2);
+      return true;
+    }
+    case Instruction::LoadVar: {
+      LabelId id = expectLabelAt(1);
+      Value val = m_ctx.getVariable(id);
+      m_ctx.push(std::move(val));
+      advance(2);
+      return true;
+    }
     default:
+      std::cerr << "Found unknown (yet) instruction: " << ins << std::endl;
       return false;
   }
   return false;

@@ -20,11 +20,15 @@
 #include <memory>
 
 ast::Node* Parser::parse() {
+  // TODO(emilio): Create an anonymous block, and read a list of statements
+  // instead?
   m_astRoot = parseExpression();
 
   auto tok = m_tokenizer.nextToken();
-  if (!tok || tok->type() != TokenType::Eof)
+  if (!tok || tok->type() != TokenType::Eof) {
     m_astRoot.reset();
+    noteParseError("Found unexpected token after program");
+  }
 
   if (!m_astRoot)
     assert(m_parseError);

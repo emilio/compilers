@@ -82,6 +82,8 @@ class VariableBinding final : public Expression {
   bool isOfType(NodeType type) const final {
     return type == NodeType::VariableBinding || Expression::isOfType(type);
   }
+
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const override;
 };
 
 class ConstantExpression final : public Expression {

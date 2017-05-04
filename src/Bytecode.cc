@@ -20,6 +20,12 @@ std::ostream& operator<<(std::ostream& os, const Instruction& kind) {
       return os << "StoreVar";
     case Instruction::CallExternalFunction:
       return os << "CallExternalFunction";
+    case Instruction::Jump:
+      return os << "Jump";
+    case Instruction::JumpIfZero:
+      return os << "JumpIfZero";
+    case Instruction::ClearVar:
+      return os << "ClearVar";
   }
 
   assert(false);
@@ -36,6 +42,8 @@ std::ostream& operator<<(std::ostream& os, const BytecodeKind& kind) {
       return os << "Value";
     case BytecodeKind::Instruction:
       return os << "Instruction";
+    case BytecodeKind::Offset:
+      return os << "Offset";
   }
 
   assert(false);
@@ -56,6 +64,9 @@ std::ostream& operator<<(std::ostream& os, const Bytecode& bytecode) {
       break;
     case BytecodeKind::Instruction:
       os << bytecode.instruction();
+      break;
+    case BytecodeKind::Offset:
+      os << bytecode.offset();
       break;
   }
 

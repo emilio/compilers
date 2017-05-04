@@ -35,8 +35,8 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 
 add_library(base OBJECT
   src/AST.cc
+  src/ExecutionContext.cc
   src/Parser.cc
-  src/Executor.cc
   src/Tokenizer.cc
   src/Value.cc
   src/Bytecode.cc
