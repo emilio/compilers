@@ -66,6 +66,21 @@ class Value {
 
   ~Value() = default;
 
+  bool operator==(const Value& other) const {
+    if (m_type != other.m_type)
+      return false;
+    switch (m_type) {
+      case ValueType::Integer:
+        return intValue() == other.intValue();
+      case ValueType::Float:
+        return doubleValue() == other.doubleValue();
+      case ValueType::Bool:
+        return boolValue() == other.boolValue();
+    }
+    assert(false);
+    return false;
+  }
+
  private:
   explicit Value(ValueType type) : m_type(type){};
 

@@ -115,11 +115,15 @@ bool ProgramExecutionState::execute() {
 
 IMPL_OP(add, +, ||)
 IMPL_OP(subract, -, -)
+IMPL_OP(mul, *, |) // Dubious: do type-checking and prevent this!
+IMPL_OP(div, /, &) // Dubious: do type-checking and prevent this!
 
 bool ProgramExecutionState::executeInstruction(Instruction ins) {
   switch (ins) {
     case Instruction::Subtract:
-    case Instruction::Add: {
+    case Instruction::Add:
+    case Instruction::Mul:
+    case Instruction::Div: {
       auto l = m_ctx.pop();
       auto r = m_ctx.pop();
       if (r.type() != l.type())
@@ -130,6 +134,12 @@ bool ProgramExecutionState::executeInstruction(Instruction ins) {
           break;
         case Instruction::Add:
           m_ctx.push(addValues(l, r));
+          break;
+        case Instruction::Mul:
+          m_ctx.push(mulValues(l, r));
+          break;
+        case Instruction::Div:
+          m_ctx.push(divValues(l, r));
           break;
         default:
           __builtin_unreachable();

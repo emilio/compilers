@@ -47,7 +47,7 @@ class Result {
     return std::move(m_err);
   }
 
-  explicit operator bool() { return isOk(); }
+  explicit operator bool() const { return isOk(); }
 };
 
 /**
