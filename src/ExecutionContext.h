@@ -14,9 +14,6 @@ class ExecutionContext {
 
   ExecutionContext() = default;
 
-  /**
-   * TODO(emilio): Labels and external function stuff goes here too.
-   */
  public:
   static std::unique_ptr<ExecutionContext> createDefault() {
     return std::unique_ptr<ExecutionContext>(new ExecutionContext);

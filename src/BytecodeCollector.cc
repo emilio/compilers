@@ -45,6 +45,12 @@ void BytecodeCollector::binOp(Operator op) {
   }
 }
 
+void BytecodeCollector::pushFunctionCall(BuiltinFunction fn, size_t args) {
+  m_bytecode.emplace_back(Instruction::CallFunction);
+  m_bytecode.push_back(Bytecode::function(fn));
+  m_bytecode.push_back(Bytecode::argumentCount(args));
+}
+
 void BytecodeCollector::pushScope() {
   m_scopes.push_back(Scope());
 }

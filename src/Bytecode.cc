@@ -18,8 +18,8 @@ std::ostream& operator<<(std::ostream& os, const Instruction& kind) {
       return os << "Subtract";
     case Instruction::StoreVar:
       return os << "StoreVar";
-    case Instruction::CallExternalFunction:
-      return os << "CallExternalFunction";
+    case Instruction::CallFunction:
+      return os << "CallFunction";
     case Instruction::Jump:
       return os << "Jump";
     case Instruction::JumpIfZero:
@@ -38,14 +38,32 @@ std::ostream& operator<<(std::ostream& os, const BytecodeKind& kind) {
       return os << "ArgumentCount";
     case BytecodeKind::LabelId:
       return os << "LabelId";
-    case BytecodeKind::ExternalFunctionId:
-      return os << "ExternalFunctionId";
+    case BytecodeKind::BuiltinFunctionId:
+      return os << "BuiltinFunctionId";
     case BytecodeKind::Value:
       return os << "Value";
     case BytecodeKind::Instruction:
       return os << "Instruction";
     case BytecodeKind::Offset:
       return os << "Offset";
+  }
+
+  assert(false);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const BuiltinFunction& function) {
+  switch (function) {
+    case BuiltinFunction::Sin:
+      return os << "Sin";
+    case BuiltinFunction::Cos:
+      return os << "Cos";
+    case BuiltinFunction::Abs:
+      return os << "Abs";
+    case BuiltinFunction::Pow:
+      return os << "Pow";
+    case BuiltinFunction::Sqrt:
+      return os << "Sqrt";
   }
 
   assert(false);
@@ -61,8 +79,8 @@ std::ostream& operator<<(std::ostream& os, const Bytecode& bytecode) {
     case BytecodeKind::ArgumentCount:
       os << bytecode.argumentCount();
       break;
-    case BytecodeKind::ExternalFunctionId:
-      os << bytecode.functionId();
+    case BytecodeKind::BuiltinFunctionId:
+      os << bytecode.function();
       break;
     case BytecodeKind::Value:
       os << bytecode.value();

@@ -3,6 +3,7 @@
 #include "AST.h"
 #include "BytecodeCollector.h"
 #include "ExecutionContext.h"
+#include <cmath>
 
 class ProgramExecutionState {
  public:
@@ -14,6 +15,13 @@ class ProgramExecutionState {
 
   bool execute();
   bool executeInstruction(Instruction);
+  bool executeFunction(BuiltinFunction id, size_t args);
+  bool executeAbs(size_t args);
+  bool executeCos(size_t args);
+  bool executePow(size_t args);
+  bool executeSin(size_t args);
+  bool executeSqrt(size_t args);
+
   const Bytecode& at(ssize_t offset) const {
     size_t final_offset = m_pc + offset;
     assert(final_offset < m_bytecode.size());
@@ -34,15 +42,19 @@ class ProgramExecutionState {
   const Bytecode& curr() const { return at(0); }
 
   const Value& expectValueAt(ssize_t offset) const {
-    const auto& bc = at(offset);
-    assert(bc.kind() == BytecodeKind::Value);
-    return bc.value();
+    return at(offset).value();
   }
 
   const LabelId expectLabelAt(ssize_t offset) const {
-    const auto& bc = at(offset);
-    assert(bc.kind() == BytecodeKind::LabelId);
-    return bc.labelId();
+    return at(offset).labelId();
+  }
+
+  const size_t expectArgumentCountAt(ssize_t offset) const {
+    return at(offset).argumentCount();
+  }
+
+  const BuiltinFunction expectFunctionAt(ssize_t offset) const {
+    return at(offset).function();
   }
 
   bool error(const std::string& msg) {
@@ -85,7 +97,7 @@ bool ProgramExecutionState::execute() {
       case BytecodeKind::ArgumentCount:
       case BytecodeKind::Offset:
       case BytecodeKind::LabelId:
-      case BytecodeKind::ExternalFunctionId:
+      case BytecodeKind::BuiltinFunctionId:
         assert(false &&
                "unexpected top-level bytecode kind, expected an instruction");
         return false;
@@ -125,10 +137,21 @@ bool ProgramExecutionState::executeInstruction(Instruction ins) {
     case Instruction::Add:
     case Instruction::Mul:
     case Instruction::Div: {
-      auto l = m_ctx.pop();
       auto r = m_ctx.pop();
-      if (r.type() != l.type())
-        return error("Mismatched types in add");
+      auto l = m_ctx.pop();
+      if (r.type() != l.type()) {
+        // Hack for unary negation of integers.
+        //
+        // TODO(emilio): Either do type checking and put the correct value from
+        // the bytecode generator, or create integer coercion rules.
+        if (l.type() == ValueType::Float &&
+            l.doubleValue() == 0. &&
+            r.type() == ValueType::Integer) {
+          l = Value::createInt(0);
+        } else {
+          return error("Mismatched types in binary operation");
+        }
+      }
       switch (ins) {
         case Instruction::Subtract:
           m_ctx.push(subractValues(l, r));
@@ -180,9 +203,103 @@ bool ProgramExecutionState::executeInstruction(Instruction ins) {
       advance(2);
       return true;
     }
+    case Instruction::CallFunction: {
+      BuiltinFunction id = expectFunctionAt(1);
+      size_t args = expectArgumentCountAt(2);
+      if (!executeFunction(id, args))
+        return error("Error in function evaluation");
+      advance(3);
+      return true;
+    }
+
     default:
       std::cerr << "Found unknown (yet) instruction: " << ins << std::endl;
       return false;
   }
+  return false;
+}
+
+bool ProgramExecutionState::executeFunction(BuiltinFunction id, size_t args) {
+  switch (id) {
+    case BuiltinFunction::Abs:
+      return executeAbs(args);
+    case BuiltinFunction::Pow:
+      return executePow(args);
+    case BuiltinFunction::Cos:
+      return executeCos(args);
+    case BuiltinFunction::Sin:
+      return executeSin(args);
+    case BuiltinFunction::Sqrt:
+      return executeSqrt(args);
+  }
+  assert(false && "unknown function!");
+  return false;
+}
+
+template<typename IntFunction, typename DoubleFunction>
+static bool simpleIntFunction(ExecutionContext& ctx,
+                              size_t argCount,
+                              bool intReturnsDouble,
+                              IntFunction intFn,
+                              DoubleFunction doubleFn) {
+  if (argCount != 1)
+    return false;
+  Value val = ctx.pop();
+  switch (val.type()) {
+    case ValueType::Bool:
+      return false;
+    case ValueType::Float:
+      ctx.push(Value::createDouble(doubleFn(val.doubleValue())));
+      return true;
+    case ValueType::Integer:
+      if (intReturnsDouble)
+        ctx.push(Value::createDouble(intFn(val.intValue())));
+      else
+        ctx.push(Value::createInt(intFn(val.intValue())));
+      return true;
+  }
+
+  assert(false && "Invalid value!");
+  return false;
+}
+
+bool ProgramExecutionState::executeAbs(size_t args) {
+  return simpleIntFunction(m_ctx, args, false, abs, fabs);
+}
+
+bool ProgramExecutionState::executeCos(size_t args) {
+  return simpleIntFunction(m_ctx, args, true, cos, cos);
+}
+
+bool ProgramExecutionState::executeSin(size_t args) {
+  return simpleIntFunction(m_ctx, args, true, sin, sin);
+}
+
+bool ProgramExecutionState::executeSqrt(size_t args) {
+  return simpleIntFunction(m_ctx, args, true, sqrt, sqrt);
+}
+
+bool ProgramExecutionState::executePow(size_t args) {
+  if (args != 2)
+    return false;
+
+  Value lhs = m_ctx.pop();
+  Value rhs = m_ctx.pop();
+
+  if (lhs.type() != rhs.type())
+    return false;
+
+  switch (lhs.type()) {
+    case ValueType::Bool:
+      return false;
+    case ValueType::Integer:
+      m_ctx.push(Value::createInt(std::pow(lhs.intValue(), rhs.intValue())));
+      return true;
+    case ValueType::Float:
+      m_ctx.push(Value::createDouble(std::pow(lhs.doubleValue(), rhs.doubleValue())));
+      return true;
+  }
+
+  assert(false && "Invalid value!");
   return false;
 }

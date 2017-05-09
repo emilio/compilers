@@ -84,6 +84,37 @@ void ForLoop::dump(ASTDumper dumper) const {
   m_body->dump(dumper);
 }
 
+static Optional<BuiltinFunction>
+builtinFunctionFromName(const std::string& name) {
+  if (name == "cos")
+    return Some(BuiltinFunction::Cos);
+  if (name == "sin")
+    return Some(BuiltinFunction::Sin);
+  if (name == "abs")
+    return Some(BuiltinFunction::Abs);
+  if (name == "sqrt")
+    return Some(BuiltinFunction::Sqrt);
+  if (name == "pow")
+    return Some(BuiltinFunction::Pow);
+  return None;
+}
+
+BytecodeCollectionResult
+FunctionCall::toByteCode(BytecodeCollector& collector) const {
+  auto functionId = builtinFunctionFromName(m_name);
+  if (!functionId)
+    return std::string("Unknown function: ") + m_name;
+  BytecodeCollectionStatus status = BytecodeCollectionStatus::DidntPush;
+  for (auto it = m_arguments.rbegin(); it != m_arguments.rend(); ++it) {
+    TRY_VAR(status, (*it)->toByteCode(collector));
+    if (status == BytecodeCollectionStatus::DidntPush)
+      return std::string("Argument didn't leave a value on the stack...");
+  }
+  collector.pushFunctionCall(*functionId, m_arguments.size());
+  return BytecodeCollectionStatus::PushedToStack;
+}
+
+
 BytecodeCollectionResult ConstantExpression::toByteCode(
     BytecodeCollector& collector) const {
   collector.pushToStack(m_value);

@@ -60,18 +60,17 @@ enum class Instruction : uint8_t {
    */
   JumpIfZero,
   /**
-   * Call an external function.
+   * Call a builtin function.
    *
    * It's followed by an external function ID, the argument count, and as many
-   * values as needed.
+   * values as needed will be in the stack.
    */
-  CallExternalFunction,
+  CallFunction,
 };
 
 std::ostream& operator<<(std::ostream&, const Instruction&);
 
 typedef uint64_t LabelId;
-typedef uint64_t ExternalFunctionId;
 
 /**
  * The kind of value that can appear in a program converted into bytecode.
@@ -79,8 +78,8 @@ typedef uint64_t ExternalFunctionId;
 enum class BytecodeKind : uint8_t {
   /** A named label ID, for a variable, for example */
   LabelId,
-  /** An external function ID */
-  ExternalFunctionId,
+  /** A builtin function */
+  BuiltinFunctionId,
   /** The argument count for a function call. */
   ArgumentCount,
   /** A `value` */
@@ -93,11 +92,21 @@ enum class BytecodeKind : uint8_t {
 
 std::ostream& operator<<(std::ostream&, const BytecodeKind&);
 
+enum class BuiltinFunction {
+  Cos,
+  Sin,
+  Abs,
+  Sqrt,
+  Pow,
+};
+
+std::ostream& operator<<(std::ostream&, const BuiltinFunction&);
+
 class Bytecode final {
   BytecodeKind m_kind;
   union Inner {
     Instruction m_instruction;
-    ExternalFunctionId m_functionId;
+    BuiltinFunction m_builtinFunction;
     LabelId m_label;
     Value m_value;
     ssize_t m_offset;
@@ -135,15 +144,21 @@ class Bytecode final {
     return b;
   }
 
+  static Bytecode function(BuiltinFunction fn) {
+    Bytecode b(BytecodeKind::BuiltinFunctionId);
+    b.m_inner.m_builtinFunction = fn;
+    return b;
+  }
+
   BytecodeKind kind() const { return m_kind; }
 
   Instruction instruction() const {
     assert(kind() == BytecodeKind::Instruction);
     return m_inner.m_instruction;
   }
-  ExternalFunctionId functionId() const {
-    assert(kind() == BytecodeKind::ExternalFunctionId);
-    return m_inner.m_functionId;
+  BuiltinFunction function() const {
+    assert(kind() == BytecodeKind::BuiltinFunctionId);
+    return m_inner.m_builtinFunction;
   }
   LabelId labelId() const {
     assert(kind() == BytecodeKind::LabelId);

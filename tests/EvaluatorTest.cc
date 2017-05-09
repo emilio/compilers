@@ -55,22 +55,22 @@ TEST(Evaluator, SimpleVarsAndPrecedence) {
   assertExprValue(kProgram, Value::createInt(75));
 }
 
-// TEST(Evaluator, Cos) {
-//   assertExprValue("1 + cos(0)", Value::createDouble(2.0));
-// }
-//
-// TEST(Evaluator, Sin) {
-//   assertExprValue("1 + sin(0)", Value::createDouble(1.0));
-// }
-//
-// TEST(Evaluator, Abs) {
-//   assertExprValue("1 + abs(-1200)", Value::createInt(1201));
-// }
-//
-// TEST(Evaluator, Sqr) {
-//   // TODO(emilio): Perhaps we should do approx_eq or something.
-//   assertExprValue("sqr(pow(10, 2))", Value::createDouble(10.0));
-// }
+TEST(Evaluator, Cos) {
+  assertExprValue("1. + cos(0)", Value::createDouble(2.0));
+}
+
+TEST(Evaluator, Sin) {
+  assertExprValue("1. + sin(0)", Value::createDouble(1.0));
+}
+
+TEST(Evaluator, Abs) {
+  assertExprValue("1 + abs(-1200)", Value::createInt(1201));
+}
+
+TEST(Evaluator, Sqr) {
+  // TODO(emilio): Perhaps we should do approx_eq or something.
+  assertExprValue("sqrt(pow(10, 2))", Value::createDouble(10.0));
+}
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

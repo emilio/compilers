@@ -28,6 +28,7 @@ class BytecodeCollector {
 
   void pushAssignTo(LabelId);
   void pushLoadVar(LabelId);
+  void pushFunctionCall(BuiltinFunction, size_t argumentCount);
   void binOp(Operator);
 
   Optional<LabelId> resolveVariable(const std::string& name);

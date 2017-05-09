@@ -199,6 +199,8 @@ class FunctionCall final : public Expression {
   bool isOfType(NodeType type) const override {
     return type == NodeType::FunctionCall || Expression::isOfType(type);
   }
+
+  BytecodeCollectionResult toByteCode(BytecodeCollector&) const final;
 };
 
 class ParenthesizedExpression final : public Expression {
