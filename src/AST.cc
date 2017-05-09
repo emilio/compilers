@@ -146,8 +146,9 @@ BytecodeCollectionResult BinaryOperation::toByteCode(
     LabelId id = collector.reserveVariableIdFor(var.varName());
     TRY_VAR(status, m_rhs->toByteCode(collector));
     if (status != BytecodeCollectionStatus::PushedToStack)
-      return std::string("Expected rhs of expression to leave a value "
-                         "in the stack");
+      return std::string(
+          "Expected rhs of expression to leave a value "
+          "in the stack");
     collector.pushAssignTo(id);
     return BytecodeCollectionStatus::PushedToStack;
   }

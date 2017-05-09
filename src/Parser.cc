@@ -321,8 +321,7 @@ std::unique_ptr<ast::Expression> Parser::parseWithOperatorPriorityAtLeast(
       return expr;
     }
 
-    auto rhs =
-      parseWithOperatorPriorityAtLeast(operatorPriority(tok->op()));
+    auto rhs = parseWithOperatorPriorityAtLeast(operatorPriority(tok->op()));
     if (!rhs)
       return nullptr;
     expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),

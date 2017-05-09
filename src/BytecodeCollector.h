@@ -3,14 +3,9 @@
 #include "Bytecode.h"
 #include "Tokenizer.h"
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
-
-/**
- * FIXME(emilio): This needs to have some concept of scopes, or something like
- * it.
- */
 class BytecodeCollector {
   struct Scope {
     std::unordered_map<std::string, LabelId> m_variables;
@@ -18,13 +13,10 @@ class BytecodeCollector {
 
   std::vector<Bytecode> m_bytecode;
   std::vector<Scope> m_scopes;
-  LabelId m_lastVariableId { 0 };
-
+  LabelId m_lastVariableId{0};
 
  public:
-  BytecodeCollector() : m_lastVariableId(0) {
-    m_scopes.push_back(Scope());
-  }
+  BytecodeCollector() : m_lastVariableId(0) { m_scopes.push_back(Scope()); }
 
   std::vector<Bytecode> takeBytecode();
 

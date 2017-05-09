@@ -1,8 +1,8 @@
 #include "Program.h"
+#include <iostream>
 #include "AST.h"
 #include "BytecodeCollector.h"
 #include "ExecutionContext.h"
-#include <iostream>
 
 class ProgramExecutionState {
  public:
@@ -115,8 +115,8 @@ bool ProgramExecutionState::execute() {
 
 IMPL_OP(add, +, ||)
 IMPL_OP(subract, -, -)
-IMPL_OP(mul, *, |) // Dubious: do type-checking and prevent this!
-IMPL_OP(div, /, &) // Dubious: do type-checking and prevent this!
+IMPL_OP(mul, *, |)  // Dubious: do type-checking and prevent this!
+IMPL_OP(div, /, &)  // Dubious: do type-checking and prevent this!
 
 bool ProgramExecutionState::executeInstruction(Instruction ins) {
   switch (ins) {

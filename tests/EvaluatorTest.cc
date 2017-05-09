@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ExecutionContext.h"
+#include "Program.h"
 #include "TestUtils.h"
 #include "gtest/gtest.h"
-#include "Program.h"
-#include "ExecutionContext.h"
 
 void assertExprValue(const char* expr, const Value& val) {
   parse(expr, [&](ast::Node* node, const ParseError* error) {
@@ -44,12 +44,13 @@ TEST(Evaluator, OperatorPrecedence) {
 }
 
 TEST(Evaluator, SimpleVarsAndPrecedence) {
-  const char* kProgram = "{"
-    "a = 15;"
-    "b = 10;"
-    "a = a + b;"
-    "a + a + a"
-  "}";
+  const char* kProgram =
+      "{"
+      "a = 15;"
+      "b = 10;"
+      "a = a + b;"
+      "a + a + a"
+      "}";
 
   assertExprValue(kProgram, Value::createInt(75));
 }
