@@ -82,6 +82,7 @@ bool ProgramExecutionState::execute() {
     const Bytecode& current = curr();
     switch (current.kind()) {
       case BytecodeKind::Value:
+      case BytecodeKind::ArgumentCount:
       case BytecodeKind::Offset:
       case BytecodeKind::LabelId:
       case BytecodeKind::ExternalFunctionId:

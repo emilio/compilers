@@ -81,6 +81,8 @@ enum class BytecodeKind : uint8_t {
   LabelId,
   /** An external function ID */
   ExternalFunctionId,
+  /** The argument count for a function call. */
+  ArgumentCount,
   /** A `value` */
   Value,
   /** A simple instruction */
@@ -99,6 +101,7 @@ class Bytecode final {
     LabelId m_label;
     Value m_value;
     ssize_t m_offset;
+    size_t m_argumentCount;
 
     Inner() {}
   } m_inner;
@@ -117,6 +120,12 @@ class Bytecode final {
   static Bytecode offset(ssize_t offset) {
     Bytecode b(BytecodeKind::Offset);
     b.m_inner.m_offset = offset;
+    return b;
+  }
+
+  static Bytecode argumentCount(size_t count) {
+    Bytecode b(BytecodeKind::ArgumentCount);
+    b.m_inner.m_argumentCount = count;
     return b;
   }
 
@@ -144,10 +153,13 @@ class Bytecode final {
     assert(kind() == BytecodeKind::Value);
     return m_inner.m_value;
   }
-
   ssize_t offset() const {
     assert(kind() == BytecodeKind::Offset);
     return m_inner.m_offset;
+  }
+  size_t argumentCount() const {
+    assert(kind() == BytecodeKind::ArgumentCount);
+    return m_inner.m_argumentCount;
   }
 };
 

@@ -34,6 +34,8 @@ std::ostream& operator<<(std::ostream& os, const Instruction& kind) {
 
 std::ostream& operator<<(std::ostream& os, const BytecodeKind& kind) {
   switch (kind) {
+    case BytecodeKind::ArgumentCount:
+      return os << "ArgumentCount";
     case BytecodeKind::LabelId:
       return os << "LabelId";
     case BytecodeKind::ExternalFunctionId:
@@ -55,6 +57,9 @@ std::ostream& operator<<(std::ostream& os, const Bytecode& bytecode) {
   switch (bytecode.kind()) {
     case BytecodeKind::LabelId:
       os << bytecode.labelId();
+      break;
+    case BytecodeKind::ArgumentCount:
+      os << bytecode.argumentCount();
       break;
     case BytecodeKind::ExternalFunctionId:
       os << bytecode.functionId();
