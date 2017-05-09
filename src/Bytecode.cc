@@ -11,7 +11,7 @@ std::ostream& operator<<(std::ostream& os, const Instruction& kind) {
     case Instruction::Load:
       return os << "Load";
     case Instruction::Pop:
-      return os << "Load";
+      return os << "Pop";
     case Instruction::LoadVar:
       return os << "LoadVar";
     case Instruction::Subtract:

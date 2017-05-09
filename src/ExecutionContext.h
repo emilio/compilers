@@ -53,4 +53,8 @@ class ExecutionContext {
   void clearVariable(LabelId);
   void setVariable(LabelId, Value);
   Value getVariable(LabelId);
+
+  friend std::ostream& operator<<(std::ostream&, const ExecutionContext&);
 };
+
+std::ostream& operator<<(std::ostream&, const ExecutionContext&);
