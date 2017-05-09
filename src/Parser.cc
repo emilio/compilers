@@ -259,33 +259,54 @@ std::unique_ptr<ast::Expression> Parser::parseOneExpression() {
   return nullptr;
 }
 
-static inline bool isProductOperation(Operator op) {
-  return op == Operator::Star || op == Operator::Slash;
+static inline uint8_t operatorPriority(Operator op) {
+  switch (op) {
+    case Operator::Equals:
+    case Operator::AndEquals:
+    case Operator::OrEquals:
+    case Operator::MinusEquals:
+    case Operator::PlusEquals:
+    case Operator::StarEquals:
+    case Operator::SlashEquals:
+      return 1;
+
+    case Operator::Shl:
+    case Operator::Shr:
+      return 2;
+
+    case Operator::Or:
+    case Operator::OrOr:
+    case Operator::And:
+    case Operator::AndAnd:
+    case Operator::EqualsEquals:
+      return 3;
+
+    case Operator::Plus:
+    case Operator::Minus:
+    case Operator::Gt:
+    case Operator::Lt:
+    case Operator::Le:
+    case Operator::Ge:
+      return 4;
+
+    case Operator::Star:
+    case Operator::Slash:
+      return 5;
+
+    case Operator::PlusPlus:
+    case Operator::MinusMinus:
+      return 6;
+  }
+  assert(false && "How?");
+  return 0;
 }
 
 std::unique_ptr<ast::Expression> Parser::parseExpression() {
-  auto expr = parseProduct();
-  if (!expr)
-    return nullptr;
-
-  while (true) {
-    auto tok = nextToken();
-    if (!tok)
-      return noteParseError(m_tokenizer.errorMessage());
-    if (tok->type() != TokenType::Operator) {
-      m_lastToken = std::move(tok);
-      return expr;
-    }
-    assert(!isProductOperation(tok->op()));
-    auto rhs = parseProduct();
-    if (!rhs)
-      return nullptr;
-    expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),
-                                                  std::move(rhs));
-  }
+  return parseWithOperatorPriorityAtLeast(0);
 }
 
-std::unique_ptr<ast::Expression> Parser::parseProduct() {
+std::unique_ptr<ast::Expression> Parser::parseWithOperatorPriorityAtLeast(
+    uint8_t minPriority) {
   auto expr = parseOneExpression();
   if (!expr)
     return nullptr;
@@ -294,12 +315,14 @@ std::unique_ptr<ast::Expression> Parser::parseProduct() {
     auto tok = nextToken();
     if (!tok)
       return noteParseError(m_tokenizer.errorMessage());
-    if (tok->type() != TokenType::Operator || !isProductOperation(tok->op())) {
+    if (tok->type() != TokenType::Operator ||
+        operatorPriority(tok->op()) < minPriority) {
       m_lastToken = std::move(tok);
       return expr;
     }
 
-    auto rhs = parseOneExpression();
+    auto rhs =
+      parseWithOperatorPriorityAtLeast(operatorPriority(tok->op()));
     if (!rhs)
       return nullptr;
     expr = std::make_unique<ast::BinaryOperation>(tok->op(), std::move(expr),

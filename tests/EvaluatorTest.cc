@@ -43,6 +43,17 @@ TEST(Evaluator, OperatorPrecedence) {
   assertExprValue("6 * 2 + 6 * 5", Value::createInt(42));
 }
 
+TEST(Evaluator, SimpleVarsAndPrecedence) {
+  const char* kProgram = "{"
+    "a = 15;"
+    "b = 10;"
+    "a = a + b;"
+    "a + a + a"
+  "}";
+
+  assertExprValue(kProgram, Value::createInt(75));
+}
+
 // TEST(Evaluator, Cos) {
 //   assertExprValue("1 + cos(0)", Value::createDouble(2.0));
 // }

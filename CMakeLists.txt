@@ -7,7 +7,7 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # In order to use YouCompleteMe with Vim.
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -pedantic -g -Werror -Wno-gnu-statement-expression" )
 

@@ -50,7 +50,8 @@ class Parser {
   std::unique_ptr<ast::ConditionalExpression>
   tryParseRemainingConditionalBranches();
 
-  std::unique_ptr<ast::Expression> parseProduct();
+  std::unique_ptr<ast::Expression>
+    parseWithOperatorPriorityAtLeast(uint8_t minPriority);
 
   // The return value here is just convenience, it always returns null.
   std::unique_ptr<ast::Expression> noteParseError(std::string&& message);

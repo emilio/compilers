@@ -1,7 +1,7 @@
 #include "ExecutionContext.h"
 
 void ExecutionContext::setVariable(LabelId id, Value val) {
-  m_variables.emplace(id, std::move(val));
+  m_variables.insert_or_assign(id, std::move(val));
 }
 
 void ExecutionContext::clearVariable(LabelId id) {
